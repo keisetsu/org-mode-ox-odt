@@ -1062,6 +1062,7 @@ My favorite scenes are (in this order)
 3. Peter Jackson being shot by Legolas
    - on DVD only
    He makes a really funny face when it happens.
+8. [@8] <favorite scenes 4 to 8 are skipped for brevity>
 But in the end, no individual scenes matter but the film as a whole.
 Important actors in this film are:
 - Elijah Wood :: He plays Frodo
@@ -2903,6 +2904,11 @@ For more information and examples see the [[https://orgmode.org/worg/org-tutoria
 
   Specify which column of the table to use as the =x= axis.
 
+- =timeind= ::
+
+  Specify which column of the table to use as the =x= axis as a time
+  value.
+
 - =deps= ::
 
   Specify the columns to graph as a Lisp style list, surrounded by
@@ -2910,7 +2916,7 @@ For more information and examples see the [[https://orgmode.org/worg/org-tutoria
   the third and fourth columns.  Defaults to graphing all other
   columns aside from the =ind= column.
 
-- transpose ::
+- =transpose= ::
 
   When =y=, =yes=, or =t= attempt to transpose the table data before
   plotting.  Also recognizes the shorthand option =trans=.
@@ -2945,21 +2951,21 @@ For more information and examples see the [[https://orgmode.org/worg/org-tutoria
   When plotting =3d= or =grid= types, set this to =t= to graph a flat
   mapping rather than a =3d= slope.
 
-- min ::
+- =min= ::
 
   Provides a minimum axis value that may be used by a plot type.
   Implicitly assumes the =y= axis is being referred to.  Can
   explicitly provide a value for a either the =x= or =y= axis with
   =xmin= and =ymin=.
 
-- max ::
+- =max= ::
 
   Provides a maximum axis value that may be used by a plot type.
   Implicitly assumes the =y= axis is being referred to.  Can
   explicitly provide a value for a either the =x= or =y= axis with
   =xmax= and =ymax=.
 
-- ticks ::
+- =ticks= ::
 
   Provides a desired number of axis ticks to display, that may be used
   by a plot type.  If none is given a plot type that requires ticks
@@ -11347,13 +11353,15 @@ see [[*Structure Templates]] for shortcuts to easily insert code blocks.
 #+end_example
 
 Both in =example= and in =src= snippets, you can add a =-n= switch to
-the end of the =#+BEGIN= line, to get the lines of the example
-numbered.  The =-n= takes an optional numeric argument specifying the
-starting line number of the block.  If you use a =+n= switch, the
-numbering from the previous numbered snippet is continued in the
-current one.  The =+n= switch can also take a numeric argument.  This
-adds the value of the argument to the last line of the previous block
-to determine the starting line number.
+the =#+BEGIN= line[fn::In the =src= snippets, switches must be placed
+right after the language name and before the [[*Structure of Code
+Blocks][header arguments]]], to get the lines of the example numbered.
+The =-n= takes an optional numeric argument specifying the starting
+line number of the block.  If you use a =+n= switch, the numbering
+from the previous numbered snippet is continued in the current one.
+The =+n= switch can also take a numeric argument.  This adds the value
+of the argument to the last line of the previous block to determine
+the starting line number.
 
 #+begin_example
 ,#+BEGIN_SRC emacs-lisp -n 20
@@ -14331,8 +14339,8 @@ tables, to HTML.
 
 #+vindex: org-md-headline-style
 Based on ~org-md-headline-style~, Markdown export can generate
-headlines of both /atx/ and /setext/ types.  /atx/ limits headline
-levels to two whereas /setext/ limits headline levels to six.  Beyond
+headlines of both /atx/ and /setext/ types.  /setext/ limits headline
+levels to two whereas /atx/ limits headline levels to six.  Beyond
 these limits, the export back-end converts headlines to lists.  To set
 a limit to a level before the absolute limit (see [[*Export Settings]]).
 

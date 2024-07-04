@@ -9,7 +9,7 @@
 ;; URL: https://orgmode.org
 ;; Package-Requires: ((emacs "26.1"))
 
-;; Version: 9.6.24
+;; Version: 9.6.30
 
 ;; This file is part of GNU Emacs.
 ;;
@@ -3708,8 +3708,8 @@ You need to reload Org or to restart Emacs after setting this.")
   "Alist of characters and faces to emphasize text.
 Text starting and ending with a special character will be emphasized,
 for example *bold*, _underlined_ and /italic/.  This variable sets the
-marker characters and the face to be used by font-lock for highlighting
-in Org buffers.
+the face to be used by font-lock for highlighting in Org buffers.
+Marker characters must be one of */_=~+.
 
 You need to reload Org or to restart Emacs after customizing this."
   :group 'org-appearance
@@ -3718,7 +3718,13 @@ You need to reload Org or to restart Emacs after customizing this."
   :package-version '(Org . "8.0")
   :type '(repeat
 	  (list
-	   (string :tag "Marker character")
+           (choice
+	    (const :tag "Bold" "*")
+            (const :tag "Italic" "/")
+            (const :tag "Underline" "_")
+            (const :tag "Verbatim" "=")
+            (const :tag "Code" "~")
+            (const :tag "Strike through" "+"))
 	   (choice
 	    (face :tag "Font-lock-face")
 	    (plist :tag "Face property list"))
@@ -8904,7 +8910,7 @@ keywords relative to each registered export back-end."
   '("ARCHIVE:" "AUTHOR:" "BIBLIOGRAPHY:" "BIND:" "CATEGORY:" "CITE_EXPORT:"
     "COLUMNS:" "CREATOR:" "DATE:" "DESCRIPTION:" "DRAWERS:" "EMAIL:"
     "EXCLUDE_TAGS:" "FILETAGS:" "INCLUDE:" "INDEX:" "KEYWORDS:" "LANGUAGE:"
-    "MACRO:" "OPTIONS:" "PROPERTY:" "PRINT_BIBLIOGRAPHY" "PRIORITIES:"
+    "MACRO:" "OPTIONS:" "PROPERTY:" "PRINT_BIBLIOGRAPHY:" "PRIORITIES:"
     "SELECT_TAGS:" "SEQ_TODO:" "SETUPFILE:" "STARTUP:" "TAGS:" "TITLE:" "TODO:"
     "TYP_TODO:" "SELECT_TAGS:" "EXCLUDE_TAGS:" "EXPORT_FILE_NAME:"))
 
@@ -16493,6 +16499,16 @@ either not currently on a tagged headline or on a tag."
 	     (< (point) (match-beginning 1)))
     (org-align-tags)))
 
+(defun org--speed-command-p ()
+  "Return non-nil when current command is a speed command.
+Set `org-speed-command' to the appropriate command as a side effect."
+  (and org-use-speed-commands
+       (let ((kv (this-command-keys-vector)))
+	 (setq org-speed-command
+	       (run-hook-with-args-until-success
+		'org-speed-command-hook
+		(make-string 1 (aref kv (1- (length kv)))))))))
+
 (defun org-self-insert-command (N)
   "Like `self-insert-command', use overwrite-mode for whitespace in tables.
 If the cursor is in a table looking at whitespace, the whitespace is
@@ -16500,12 +16516,7 @@ overwritten, and the table is not marked as requiring realignment."
   (interactive "p")
   (org-fold-check-before-invisible-edit 'insert)
   (cond
-   ((and org-use-speed-commands
-	 (let ((kv (this-command-keys-vector)))
-	   (setq org-speed-command
-		 (run-hook-with-args-until-success
-		  'org-speed-command-hook
-		  (make-string 1 (aref kv (1- (length kv))))))))
+   ((org--speed-command-p)
     (cond
      ((commandp org-speed-command)
       (setq this-command org-speed-command)
@@ -16615,8 +16626,9 @@ because, in this case the deletion might narrow the column."
 ;; Make `delete-selection-mode' work with Org mode and Orgtbl mode
 (put 'org-self-insert-command 'delete-selection
      (lambda ()
-       (not (run-hook-with-args-until-success
-             'self-insert-uses-region-functions))))
+       (unless (org--speed-command-p)
+         (not (run-hook-with-args-until-success
+             'self-insert-uses-region-functions)))))
 (put 'orgtbl-self-insert-command 'delete-selection
      (lambda ()
        (not (run-hook-with-args-until-success
