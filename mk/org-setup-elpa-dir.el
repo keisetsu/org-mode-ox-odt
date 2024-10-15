@@ -176,6 +176,10 @@
   (package-initialize 'no-activate)
   (mapc #'package-activate odt-libs))
 
+(when (featurep 'org-macs)
+  (error "Refusing to proceed ahead with compilation.  org-macs loaded from %s"
+         (find-library-name (symbol-name l))))
+
 ;; Load the above libraries
 (require 'find-func)
 (dolist (l odt-libs)

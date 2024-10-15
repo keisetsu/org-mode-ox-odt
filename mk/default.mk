@@ -135,7 +135,7 @@ MAKE_LOCAL_MK = $(BATCHO) \
 # Emacs must be started in lisp directory
 BATCHL	= $(BATCH) \
 	  --eval '(add-to-list `load-path ".")' \
-	  --eval '(load (expand-file-name "../mk/org-setup-elpa-dir.el"))'
+	  --eval '(load (expand-file-name "../mk/org-setup-elpa-dir.el") nil t)'
 
 # How to generate org-loaddefs.el
 MAKE_ORG_INSTALL = $(BATCHL) \
