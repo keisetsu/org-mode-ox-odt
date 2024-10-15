@@ -146,15 +146,35 @@
 
 ;; Libraries that the OpenDocument Exporter relies on
 (defvar odt-libs
-  '(peg rnc-mode citeproc))
+  '(
+    peg
+    rnc-mode
+    ;; citeproc
+    
+    ;; `citeproc' loads `org'.
+
+    ;; So, don't add `citeproc' or any other lib that is dependent on
+    ;; `org' here.  citeproc
+
+    ;; `citeproc' is a soft dependency.  That is, if `citeproc' is
+    ;; available at run time additional ODT specific features are made
+    ;; available. Otherwise, there is no harm.
+    ))
 
 ;; Configure the ELPA dir where `peg', `rnc-mode' can be found
 (when (getenv "USER_ELPA_DIR")
   (setq package-user-dir (file-name-as-directory (getenv "USER_ELPA_DIR"))))
 
 ;; Put `peg', `rnc-mode' etc in the `load-path'
-(package-initialize 'no-activate)
-(mapc #'package-activate odt-libs)
+(let ((package-load-list (append
+	                  ;; Disable `org' from ELPA dir
+	                  '((org nil))
+	                  ;; Enable  `peg', `rnc-mode' etc from `odt-libs'.
+	                  (mapcar (lambda (l)
+		                    (list l t))
+		                  odt-libs))))
+  (package-initialize 'no-activate)
+  (mapc #'package-activate odt-libs))
 
 ;; Load the above libraries
 (require 'find-func)
