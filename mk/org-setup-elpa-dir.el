@@ -154,7 +154,7 @@
 
 ;; Put `peg', `rnc-mode' etc in the `load-path'
 (package-initialize 'no-activate)
-(mapc #'package-activate '(peg rnc-mode citeproc))
+(mapc #'package-activate odt-libs)
 
 ;; Load the above libraries
 (require 'find-func)
