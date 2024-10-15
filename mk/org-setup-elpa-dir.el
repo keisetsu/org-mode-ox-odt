@@ -157,12 +157,14 @@
 (mapc #'package-activate '(peg rnc-mode citeproc))
 
 ;; Load the above libraries
+(require 'find-func)
 (dolist (l odt-libs)
   (cond
    ;; Case 1: The required packages are available.  Just log the
    ;; directory from which these libraries are picked up.
-   ((require l nil t)
-    (message "Library `%s' loaded from `%s'" l (find-library-name (symbol-name l))))
+   ((ignore-errors (find-library-name (symbol-name l)))
+    ;; (message "Library `%s' loaded from `%s'" l (find-library-name (symbol-name l)))
+    )
    ;; Case 2: The required libraries are NOT found.  Suggest corrective
    ;; action to the user.
    (t
