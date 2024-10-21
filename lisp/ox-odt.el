@@ -9835,7 +9835,8 @@ contextual information."
 					  (when (and (numberp n) master-page-name)
 					    n)))
 			   style-name)
-		      (if (not props) base-style-name
+		      (if (not props)
+                          (setq style-name base-style-name)
 			(setq style-name (format "Org%s" (org-odt--name-object info 'table)))
 			(plist-put info :odt-automatic-styles
 				   (concat (plist-get info :odt-automatic-styles)
