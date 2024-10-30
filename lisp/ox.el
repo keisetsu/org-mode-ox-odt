@@ -81,6 +81,7 @@
 (require 'ol)
 (require 'org-element)
 (require 'org-macro)
+(require 'org-attach) ; org-attach adds staff to `org-export-before-parsing-functions'
 (require 'tabulated-list)
 
 (declare-function org-src-coderef-format "org-src" (&optional element))
@@ -155,8 +156,11 @@
     (:cite-export "CITE_EXPORT" nil org-cite-export-processors))
   "Alist between export properties and ways to set them.
 
-The key of the alist is the property name, and the value is a list
-like (KEYWORD OPTION DEFAULT BEHAVIOR) where:
+Each element of the alist is a list like
+(ALIST-KEY KEYWORD OPTION DEFAULT BEHAVIOR)
+
+ALIST-KEY is the key of the alist - a symbol like `:option', and the
+value is (KEYWORD OPTION ...).
 
 KEYWORD is a string representing a buffer keyword, or nil.  Each
   property defined this way can also be set, during subtree
@@ -1931,7 +1935,7 @@ Return a string."
 		 (progn ,@body)
 	       (org-link-broken
 		(pcase (plist-get info :with-broken-links)
-		  (`nil (user-error "Org export aborted. Unable to resolve link: %S\nSee `org-export-with-broken-links'." (nth 1 err)))
+		  (`nil (user-error "Org export aborted.  Unable to resolve link: %S\nSee `org-export-with-broken-links'" (nth 1 err)))
 		  (`mark (org-export-data
 			  (format "[BROKEN LINK: %s]" (nth 1 err)) info))
 		  (_ nil))))))
@@ -6175,6 +6179,7 @@ them."
      ("tr" :default "Devamı sonraki sayfada"))
     ("Created"
      ("cs" :default "Vytvořeno")
+     ("de" :default "Erstellt am")
      ("et" :default "Loodud")
      ("fa" :default "ساخته شده")
      ("nl" :default "Gemaakt op")  ;; must be followed by a date or date+time
@@ -6430,6 +6435,7 @@ them."
     ("See figure %s"
      ("cs" :default "Viz obrázek %s")
      ("et" :default "Vaata joonist %s")
+     ("de" :default "Siehe Abbildung %s")
      ("fa" :default "نمایش شکل %s")
      ("fr" :default "cf. figure %s"
       :html "cf.&nbsp;figure&nbsp;%s" :latex "cf.~figure~%s")
@@ -6446,6 +6452,7 @@ them."
     ("See listing %s"
      ("cs" :default "Viz program %s")
      ("et" :default "Vaata loendit %s")
+     ("de" :default "Siehe Programmlisting %s")
      ("fa" :default "نمایش برنامه‌ریزی %s")
      ("fr" :default "cf. programme %s"
       :html "cf.&nbsp;programme&nbsp;%s" :latex "cf.~programme~%s")
@@ -6462,7 +6469,7 @@ them."
      ("ar" :default "انظر قسم %s")
      ("cs" :default "Viz sekce %s")
      ("da" :default "jævnfør afsnit %s")
-     ("de" :default "siehe Abschnitt %s")
+     ("de" :default "Siehe Abschnitt %s")
      ("es" :ascii "Vea seccion %s" :html "Vea secci&oacute;n %s" :default "Vea sección %s")
      ("et" :default "Vaata peatükki %s" :html "Vaata peat&#252;kki %s" :utf-8 "Vaata peatükki %s")
      ("fa" :default "نمایش بخش %s")
@@ -6485,6 +6492,7 @@ them."
     ("See table %s"
      ("cs" :default "Viz tabulka %s")
      ("et" :default "Vaata tabelit %s")
+     ("de" :default "Siehe Tabelle %s")
      ("fa" :default "نمایش جدول %s")
      ("fr" :default "cf. tableau %s"
       :html "cf.&nbsp;tableau&nbsp;%s" :latex "cf.~tableau~%s")
