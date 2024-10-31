@@ -198,8 +198,8 @@
 ;;;; DOM: Bare Essentials
 
 (defun odt-dom-type (node)
-  (when-let ((first (car-safe node))
-	     ((symbolp first)))
+  (when-let* ((first (car-safe node))
+	      ((symbolp first)))
     first))
 
 (defalias 'odt-dom-node-p

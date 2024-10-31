@@ -1399,7 +1399,7 @@
    (let* ((data (org-element-parse-buffer))
 	  (tables (org-element-map data 'table
 		    (lambda (table)
-		      (when-let ((label (org-element-property :name table)))
+		      (when-let* ((label (org-element-property :name table)))
 			(cons label table)))))
 	  (p (point)))
      (sort tables

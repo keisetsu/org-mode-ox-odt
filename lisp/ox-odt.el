@@ -972,7 +972,7 @@ https://raw.githubusercontent.com/LibreOffice/core/master/i18nlangtag/source/iso
 	(kill-buffer buffer))))))
 
 (defun org-odt-pop-to-debug-log ()
-  (when-let ((debug-buffer org-odt-debug-log-buffer))
+  (when-let* ((debug-buffer org-odt-debug-log-buffer))
     (with-current-buffer debug-buffer
       (emacs-lisp-mode)
       (goto-char (point-min))
@@ -3193,9 +3193,9 @@ command `org-odt-create-custom-desktop-file'."
 		   ,@(mapcar (lambda (c)
 			       `(file :tag ,c ,c))
 			     (append
-                              (when-let ((cmd (executable-find
-                                               (alist-get system-type
-                                                          org-odt-default-soffice-executables))))
+                              (when-let* ((cmd (executable-find
+                                                (alist-get system-type
+                                                           org-odt-default-soffice-executables))))
                                 (list cmd))
                               (org-odt-soffice-executables)))))
   :group 'org-export-odt
@@ -3210,10 +3210,10 @@ command `org-odt-create-custom-desktop-file'."
   To create custom desktop file, do M-x customize-variable RET org-odt-soffice-executable or
   do M-x org-odt-create-custom-desktop-file"))
           (t
-           (when-let (((not load-file-name))
-                      ;; (org-odt-create-custom-desktop-file)
-                      ;; ((memq system-type '(gnu/linux)))
-                      value)
+           (when-let* (((not load-file-name))
+                       ;; (org-odt-create-custom-desktop-file)
+                       ;; ((memq system-type '(gnu/linux)))
+                       value)
              (thread-last org-odt-file-extensions-alist
 	        	  (odt-seq-keep
 	        	   (pcase-lambda (`(,_ ,mimetype ,_ ,app))

@@ -646,9 +646,9 @@ C-x C-s
 (defun odt-stylesdom:style-name->nodes (dom style-name)
   (odt-dom-map
    (lambda (node)
-     (when-let (((odt-dom-node-p node))
-		((string= style-name
-			  (or (odt-dom-property node 'style:name) ""))))
+     (when-let* (((odt-dom-node-p node))
+		 ((string= style-name
+			   (or (odt-dom-property node 'style:name) ""))))
        node))
    dom))
 
@@ -663,9 +663,9 @@ C-x C-s
 (defun odt-stylesdom:style-signature->node (dom style-name)
   (odt-dom-map
    (lambda (node)
-     (when-let (((odt-dom-node-p node))
-		((string= style-name
-			  (or (odt-dom-property node 'style:name) ""))))
+     (when-let* (((odt-dom-node-p node))
+		 ((string= style-name
+			   (or (odt-dom-property node 'style:name) ""))))
        node))
    dom))
 
@@ -679,8 +679,8 @@ C-x C-s
   "Return list of ((ELEMENT . STYLE-FAMILY) . STYLE-NAME). "
   (odt-dom-map
    (lambda (node)
-     (when-let ((style-name (odt-dom-property node 'style:name)))
-       (cons (if-let ((family (odt-dom-property node 'style:family)))
+     (when-let* ((style-name (odt-dom-property node 'style:name)))
+       (cons (if-let* ((family (odt-dom-property node 'style:family)))
 		 (cons (dom-tag node)
 		       (intern family))
 	       (dom-tag node))
@@ -719,9 +719,9 @@ C-x C-s
 (defun odt-stylesdom:get-char-style-definitions (dom)
   (odt-dom-map
    (lambda (node)
-     (when-let ((style-name (odt-dom-property node 'style:name))
-		(style-family (odt-dom-property node 'style:family))
-		((string= style-family "text")))
+     (when-let* ((style-name (odt-dom-property node 'style:name))
+		 (style-family (odt-dom-property node 'style:family))
+		 ((string= style-family "text")))
        style-name))
    dom))
 
@@ -770,7 +770,7 @@ C-x C-s
   (delete-dups
    (odt-dom-map
     (lambda (node)
-      (when-let ((ntype (odt-dom-node-p node)))
+      (when-let* ((ntype (odt-dom-node-p node)))
 	(cl-loop for x in (odt-dom-contents node)
 		 when (eq (odt-dom-type x) type)
 		 return ntype)))
@@ -881,7 +881,7 @@ C-x C-s
 (defun odt-contentsdom:dom->text:style-names (dom)
   (odt-dom-map
    (lambda (node)
-     (when-let ((style-name (odt-dom-property node 'text:style-name)))
+     (when-let* ((style-name (odt-dom-property node 'text:style-name)))
        style-name))
    dom))
 
