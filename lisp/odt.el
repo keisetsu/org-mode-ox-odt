@@ -62,6 +62,9 @@
 		((numberp x)))
       x)))
 
+(defmacro odt-pcase--flip (fun arg1 arg2)
+  `(,fun ,arg2 ,arg1))
+
 (defmacro odt-pcase--flip-3ary (fun arg1 arg2 arg3)
   ;; `odt-pcase--flip-3ary' replaces `map--pcase-map-elt'.  Note that
   ;; `map--pcase-map-elt' is only available on Emacs 30, the development
@@ -82,13 +85,13 @@
 			   ,var))
 		    ((pred keywordp)
 		     (let ((var (intern (substring (symbol-name it) 1))))
-		       `(app (pcase--flip map-elt ,it) ,var)))
+		       `(app (odt-pcase--flip map-elt ,it) ,var)))
 		    ((pred symbolp)
 		     (let ((var it))
-		       `(app (pcase--flip map-elt ',it) ,var)))
+		       `(app (odt-pcase--flip map-elt ',it) ,var)))
 		    ((pred stringp)
 		     (let ((var (intern it)))
-		       `(app (pcase--flip map-elt ,it) ,var))))))))
+		       `(app (odt-pcase--flip map-elt ,it) ,var))))))))
 
 (pcase-defmacro odt-map (&rest args)
   `(and (pred mapp)

@@ -3069,7 +3069,7 @@ export."
 		   ;; with `org-odt-soffice-executable'
 		   (t
 		    (thread-last desktop-entries
-				 (pcase--flip map-elt org-odt-soffice-executable)
+				 (odt-pcase--flip map-elt org-odt-soffice-executable)
 				 (funcall (lambda (it)
 					    (unless it
 					      (message "ox-odt: No desktop file associated with `%s'"
@@ -3092,19 +3092,19 @@ export."
                                  (lambda (it)
                                    (format-spec it `((?a . ,(or (when chosen-app (format "--%s" chosen-app)) ""))
                                                      (?X . ,chosen-cmd)))))
-                                (pcase--flip string-join " ")))
+                                (odt-pcase--flip string-join " ")))
 		  (modified-desktop-contents (progn chosen-desktop-map
 						    (map-put! chosen-desktop-map "Exec" modified-Exec-value)
 						    (thread-last chosen-desktop-map
 								 (map-apply (lambda (k v)
 									      (format "%s=%s" k v)))
 								 (cons "[Desktop Entry]")
-								 (pcase--flip string-join "\n"))))
+								 (odt-pcase--flip string-join "\n"))))
 		  (target-desktop-file
                    (expand-file-name (format custom-desktop-file-name-template
 				             (or chosen-app
                                                  (thread-last odf-mime-type
-                                                              (pcase--flip split-string "\\.")
+                                                              (odt-pcase--flip split-string "\\.")
                                                               last
                                                               car)))
 				     (file-name-as-directory
@@ -4075,7 +4075,7 @@ significance.  All other values are ignored."
 		    (funcall (lambda (it)
 			       (list
 				(thread-last it
-					     (pcase--flip odt-dom-property 'style:name))
+					     (odt-pcase--flip odt-dom-property 'style:name))
 				(thread-last it
 					     (odt-dom-map (lambda (it)
 							    (when (eq 'style:table-cell-properties (odt-dom-type it))
@@ -4148,7 +4148,7 @@ significance.  All other values are ignored."
 		 (seq-map
 		  (lambda (it)
 		    (org-odt--lisp-to-xml it nil t)))
-		 (pcase--flip string-join "\n"))))
+		 (odt-pcase--flip string-join "\n"))))
 
 (cl-defun org-odt--build-date-styles (fmt style &key number:automatic-order)
   ;; In LibreOffice 3.4.6, there doesn't seem to be a convenient way
@@ -5724,7 +5724,7 @@ format for ODT export is `org'."
                     (format "\n<text:p text:style-name=\"%s\">%s</text:p>"
                             style-name
                             bib-item)))
-                 (pcase--flip string-join "\n")
+                 (odt-pcase--flip string-join "\n")
                  (format "<text:section text:style-name=\"%s\" text:name=\"%s\">%s</text:section>"
                          "OrgCSLBibBody"
                          "Bibliography"))))
@@ -11933,7 +11933,7 @@ This function is used for prettifying XML files when user option
                            (thread-last org-odt-all-styles-file-extensions
                                         (cons "xml")
                                         (seq-map (lambda (it) (format ".%s" it)))
-                                        (pcase--flip string-join "|")
+                                        (odt-pcase--flip string-join "|")
                                         (format "OpenDocument file [%s]: "))
                            nil ; dir
                            nil ; default-file-name

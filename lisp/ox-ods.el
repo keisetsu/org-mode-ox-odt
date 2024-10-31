@@ -465,7 +465,7 @@
 				  (lambda (it)
 				    (string-join it ""))))))
 		 (apply #'append)
-                 (pcase--flip seq-into 'vector))))
+                 (odt-pcase--flip seq-into 'vector))))
 
 (defconst org-ods-max-columns
   (length org-ods-colnames))
@@ -1297,7 +1297,7 @@
 					(thread-last "Spreadsheet"
 						     (map-elt org-odt-convert-capabilities)
 						     car
-						     (pcase--flip seq-difference '("csv"))
+						     (odt-pcase--flip seq-difference '("csv"))
 						     ;; ("ods" "ots" "xls" "xlsx")
 						     (member (file-name-extension file-name)))))
 		      expand-file-name)
@@ -1326,7 +1326,7 @@
 								 "--" (zero-or-more any)
 								 ,out-file-extension
 								 eos)))))
-		 (pcase--flip sort 'string>)
+		 (odt-pcase--flip sort 'string>)
 		 (seq-do
 		  (lambda (it)
 		    (when-let* (((file-readable-p it))
