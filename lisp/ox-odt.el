@@ -3201,14 +3201,16 @@ command `org-odt-create-custom-desktop-file'."
   :group 'org-export-odt
   :set (lambda (var value)
 	 (set-default var value)
-         (message "ox-odt: Soffice executable is `%s'"
-                  org-odt-soffice-executable)
+         (unless noninteractive         ; suppress below message during batch compilation
+           (message "ox-odt: Soffice executable is `%s'"
+                    org-odt-soffice-executable))
          (cond 
           ((and load-file-name
                 (string= (file-name-base load-file-name) "ox-odt"))
-           (message "ox-odt: Refusing to create / overwrite custom desktop file during load.
+           (unless noninteractive       ; suppress below message during batch compilation
+             (message "ox-odt: Refusing to create / overwrite custom desktop file during load.
   To create custom desktop file, do M-x customize-variable RET org-odt-soffice-executable or
-  do M-x org-odt-create-custom-desktop-file"))
+  do M-x org-odt-create-custom-desktop-file")))
           (t
            (when-let* (((not load-file-name))
                        ;; (org-odt-create-custom-desktop-file)
