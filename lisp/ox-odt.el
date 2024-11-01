@@ -5733,6 +5733,16 @@ format for ODT export is `org'."
 
 ;;;;;; Register with Citeproc
 
+(declare-function hfy-face-to-style "htmlfontify" (fn))
+(declare-function citeproc-fmt--xml-escape "citeproc-formatters" (s))
+(declare-function citeproc-formatter-fun-create  "citeproc-formatters" (fmt-alist))
+(declare-function citeproc-formatter-create "citeproc-formatters")
+;; (declare-function citeproc-formatter-create "citeproc-formatters"
+;;                   (&key rt cite bib-item bib
+;;                         no-external-links))
+
+(defvar citeproc-fmt--formatters-alist)
+
 (with-eval-after-load 'citeproc
   (when org-odt-citeproc-backend
     (require 'citeproc-formatters)
