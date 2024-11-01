@@ -4936,7 +4936,7 @@ Expecting Styles file with any of the following extensions %S"
 		 ;; specified any of these styles.
 		 (= nstyles-after nstyles-before))
 	  (user-error "You have defined only %s of %s Htmlfontify styles.
-Define the following themes to avoid inconsistent theming of source blocks\n\n%S"
+Define the following styles %S to avoid inconsistent theming of source blocks\n\n%S"
 		      nstyles-after nstyles-before
 		      styles1-after
 		      (dom-children dom1))))
