@@ -6407,7 +6407,15 @@ documenting indexing software.
 Note that the `keyword-to-documentproperty' macro is already
 defined for you by the OpenDocument exporter.  See
 `org-odt-global-macros' for more information."
-  (pcase-let* ((org-keyword (upcase org-keyword))
+  (pcase-let* ((odt-string-to-timestamp
+                (lambda (s)
+                  (with-temp-buffer
+                    (save-excursion
+                      (insert s))
+                    (when-let* ((el (org-element-context))
+		                ((eq (org-element-type el) 'timestamp)))
+                      el))))
+               (org-keyword (upcase org-keyword))
 	       (parsed (with-temp-buffer
 			 (save-excursion
 			   (insert (format "(%s)" org-value)))
@@ -6441,7 +6449,7 @@ defined for you by the OpenDocument exporter.  See
                               ;; if it parses to an Org timestamp.  If
                               ;; yes, set the `:type' to `date'.
                               ;; Otherwise, its just a regular `string.'
-			      (if (odt-string-to-timestamp in-buffer-value)
+			      (if (funcall odt-string-to-timestamp in-buffer-value)
 				  'date
 				'string))
 			     (_ nil)))))
@@ -6454,7 +6462,7 @@ defined for you by the OpenDocument exporter.  See
 			    (`date
                              ;; Only an Org timestamp can become a `date'
                              (when-let* (((stringp in-buffer-value))
-					 (ts (odt-string-to-timestamp in-buffer-value)))
+					 (ts (funcall odt-string-to-timestamp in-buffer-value)))
 			       ts))
 			    (`float
                              ;; Only a string parseable as number or a
