@@ -12424,7 +12424,16 @@ form
     (cl-loop for macro in org-odt-global-macros
 	     do (add-to-list 'org-export-global-macros macro t))))
 
-(add-hook 'org-export-before-processing-hook 'org-odt-export-before-processing-function)
+(defmacro org-odt--init-with-compat ()
+  (cond
+   ((version< org-version "9.6")
+    `(progn
+       (add-hook 'org-export-before-processing-hook 'org-odt-export-before-processing-function)))
+   (t
+    `(progn
+       (add-hook 'org-export-before-processing-functions 'org-odt-export-before-processing-function)))))
+
+(org-odt--init-with-compat)
 
 (provide 'ox-odt)
 
