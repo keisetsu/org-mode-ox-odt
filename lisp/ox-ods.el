@@ -1,6 +1,6 @@
 ;;; ox-ods.el --- OpenDocument Spreadsheet Document for Org Mode -*- lexical-binding: t; coding: utf-8-emacs; -*-
 
-;; Copyright (C) 2022-23 Jambunathan K <kjambunathan at gmail dot com>
+;; Copyright (C) 2022-2024 Jambunathan K <kjambunathan at gmail dot com>
 
 ;; Author: Jambunathan K <kjambunathan at gmail dot com>
 ;; Maintainer: Jambunathan K <kjambunathan at gmail dot com>

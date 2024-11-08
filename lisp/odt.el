@@ -1,6 +1,6 @@
 ;;;; odt --- Odt -*- lexical-binding: t; coding: utf-8-emacs; -*-
 
-;; Copyright (C) 2022  Jambuanthan K
+;; Copyright (C) 2022-2024  Jambuanthan K
 
 ;; Author: Jambunathan K <kjambunathan@gmail.com>
 ;; Version:
