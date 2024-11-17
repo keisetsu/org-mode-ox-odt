@@ -5,6 +5,7 @@
     - [Installation](#installation)
         - [Ensure that you are using the *enhanced `ox-odt`* and *not* the `ox-odt` that comes with *upstream* `emacs` or `org-mode`](#ensure-that-you-are-using-the-enhanced-ox-odt-and-not-the-ox-odt-that-comes-with-upstream-emacs-or-org-mode)
         - [What to do if the `ox-odt` from previous step is *not* the enhanced `ox-odt`](#what-to-do-if-the-ox-odt-from-previous-step-is-not-the-enhanced-ox-odt)
+            - [Install dependencies like `seq`, `peg`, `citeproc`, `rnc-mode` etc](#install-dependencies-like-seq-peg-citeproc-rnc-mode-etc)
             - [If you use Emacs' `package.el` ...](#if-you-use-emacs-packageel-)
             - [If you use `straight.el` ...](#if-you-use-straightel-)
             - [If you use Doom Emacs' `straight.el` ...](#if-you-use-doom-emacs-straightel-)
@@ -72,6 +73,42 @@ ox-odt             9.2.1.205     available  ox-odt     OpenDocument Text Exporte
 
 ### What to do if the `ox-odt` from previous step is *not* the enhanced `ox-odt`
 
+#### Install dependencies like `seq`, `peg`, `citeproc`, `rnc-mode` etc
+
+This repository depends on following packages
+
+1. [seq](https://elpa.gnu.org/packages/seq.html): *Sequence manipulation functions*
+
+   *(This package is available in GNU ELPA)*
+
+   This is a *Mandatory* package.
+
+2. [peg](https://elpa.gnu.org/packages/peg.html): *Parsing Expression Grammars in Emacs Lisp*
+
+   *(This package is available in GNU ELPA)*
+   
+   This package is *Not Needed*, if you want to use just the `ODT` (= `OpenDocument Text`) exporter.
+   
+   This package is *Mandatory*, if you want to make use of `ODS` (= `OpenDocument Spreadsheet`) exporter.
+
+3. [citeproc](https://github.com/andras-simonyi/citeproc-el): *A CSL 1.0.2 Citation Processor*
+   
+   *(This package is available in [MELPA](https://melpa.org/#/citeproc))*
+   
+   This package is *Desirable*.
+   
+   When this package is available in `load-path`, the ODT exporter will provide richer formatting of Citations and Bibliographies.
+
+4. [rnc-mode](https://elpa.gnu.org/packages/rnc-mode.html): Emacs mode to edit `Relax-NG Compact` files
+
+   *(This package is available in GNU ELPA)*
+   
+   This package is *Optional*.
+   
+   Install this package only if you have a need to look at `*.rnc` files.
+	
+Ensure you install one or more of the above packages depending on your needs. 
+
 #### If you use Emacs' `package.el` ...
 
 1. Add the following to the very end of your init file
@@ -96,6 +133,7 @@ ox-odt             9.2.1.205     available  ox-odt     OpenDocument Text Exporte
                    :host github
                    :repo "kjambunathan/org-mode-ox-odt"
                    :files ("lisp/ox-odt.el"
+                           "lisp/ox-ods.el"
                            "lisp/odt.el"
                            "etc"
                            "docs"
@@ -113,6 +151,7 @@ ox-odt             9.2.1.205     available  ox-odt     OpenDocument Text Exporte
                  :host github
                  :repo "kjambunathan/org-mode-ox-odt"
                  :files ("lisp/ox-odt.el"
+                         "lisp/ox-ods.el"
                          "lisp/odt.el"
                          "etc"
                          "docs"
@@ -130,6 +169,7 @@ Assuming that you have checked out the source under `~/src/` directory, add the 
 ``` elisp
 (setq load-path (cons "~/src/org-mode-ox-odt/lisp/" load-path))
 (load-library "ox-odt")
+(load-library "ox-ods")
 ```
 
 #### If you have lost all hope of using this exporter ...
@@ -154,7 +194,8 @@ Assuming that you have checked out the source under `~/src/` directory, add the 
 	 ;; Replace this path with where `ox-odt.el' can be found
 	 "~/Downloads/ox-odt-9.5.3.456/"
 	 load-path))
-  (load-library "ox-odt"))
+  (load-library "ox-odt")	 
+  (load-library "ox-ods"))
 ```
 4. Restart Emacs
 
@@ -205,6 +246,6 @@ If you would like to customize the look of a document produced by this exporter,
 
 `LibreOffice` comes with good set of [User Guides](https://documentation.libreoffice.org/en/english-documentation/).  If you find that these guides are too detailed for your  immediate needs, you may want to start with one of these:
 
-1. [Students' Guide to OpenOffice Writer](https://web.archive.org/web/20220121040747/https://wiki.documentfoundation.org/images/0/01/Ooo_for_students.pdf) 
+1. [Students' Guide to OpenOffice Writer](https://web.archive.org/web/20220121040747/https://wiki.documentfoundation.org/images/0/01/Ooo_for_students.pdf)
 2. [Writing a Thesis in OpenOffice.org](https://web.archive.org/web/20220525051011/http://www.openoffice.org/documentation/HOW_TO/word_processing/How_to_Write_a_Thesis_in_OOo.pdf)
 3. [Self-Publishing using LibreOffice Writer 6: How to use free software to write, design, and create ebooks and PDFs for print-on-demand books](https://web.archive.org/web/20220525050638/https://www.taming-libreoffice.com/wp-content/uploads/2019/10/SelfPublishWithLibreOffice6.pdf).  For more recent versions, see [Taming LibreOffice Resources for intermediate & advanced users](https://taming-libreoffice.com/my-books/).
