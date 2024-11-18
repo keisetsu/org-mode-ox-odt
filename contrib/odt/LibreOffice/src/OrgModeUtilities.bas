@@ -289,7 +289,7 @@ Sub CreateODTFileWithAllFactoryStyles
     Dim interactive
     ' BasicLibraries.loadLibrary("XrayTool")
     ' LoadMriLibrary()
-    BasicLibraries.loadLibrary("MRILib")
+    ' BasicLibraries.loadLibrary("MRILib")
     Dim oProps(0) as New com.sun.star.beans.PropertyValue
     oProps(0).Name = "Hidden"
     oProps(0).Value = False
