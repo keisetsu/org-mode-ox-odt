@@ -86,6 +86,8 @@ odtpkg: ELPA_PKG_FILES				= lisp/ox-odt.el																\
 
 odtpkg: ELPA_PKG_TAR_ARGS			= --exclude=test-new.odt									\
 										--exclude=subdocument2.*								\
+										--exclude=testing/examples/odt/table-templates			\
+										--exclude=etc/styles/LOAllFactoryStyles.odt				\
 										--transform='s|contrib/lisp/||'							\
 										--transform='s|lisp/||'									\
 										--transform='s|contrib/odt/LibreOffice|LibreOffice/|'	\
