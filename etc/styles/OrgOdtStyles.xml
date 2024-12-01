@@ -875,7 +875,7 @@
    </text:list-level-style-number>
   </text:list-style>
 
-  <text:list-style style:name="OrgOutline" style:display-name="OrgOutline">
+  <text:list-style style:name="OrgOutlineList" style:display-name="OrgOutlineList">
    <text:list-level-style-number text:level="1" style:num-suffix=". " style:num-format="1">
     <style:list-level-properties text:list-level-position-and-space-mode="label-alignment">
      <style:list-level-label-alignment text:label-followed-by="nothing" fo:text-indent="-0.9cm" fo:margin-left="0.9cm"/>
