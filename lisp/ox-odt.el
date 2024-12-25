@@ -2499,6 +2499,41 @@ accordingly."
 	  (cons (string :tag "Macro Name")
 		(string :tag "Expansion Template"))))
 
+;;;; Plain Text
+
+(defcustom org-odt-plain-text-replacement-rules
+  `((,xml-invalid-characters-re
+     . (lambda (text)
+         (error "Found Invalid XML Character: %s.  See `org-odt-plain-text-replacement-rules'" text))))
+  "Specify how to handle special patterns in `org-odt-plain-text'.
+
+This is an ALIST of (REGEXP . REPLACEMENT) pairs.
+
+REGEXP and REPLACEMENT are passed as REGEXP and REPL args of
+`replace-regexp-in-string'.  In other words, REPLACEMENT can be a simple
+string, or a function that takes the string matched by REGEXP as
+argument, and returns the replacement string.
+
+The default value throws an error when an invalid XML character
+(= `xml-invalid-characters-re') is found.
+
+In Emacs, it is customary to use FORM FEED characters as page
+delimiters.  FORM FEED and many control characters cannot be encoded as
+XML text, and emitting them verbatim will result in corrupt OpenDocument
+files.  To avoid such externalities, use this option to strip or
+transform this (and many other control) characters."
+  :group 'org-export-odt
+  :type '(repeat (cons (choice
+                        (const :tag "All Invalid XML characters" xml-invalid-characters-re)
+                        (regexp :tag "Regexp"))
+	         (choice
+                  (const :tag "Strip" "")
+                  (const :tag "Replace with Space" (lambda (text) " "))
+                  (const :tag "Warn" (lambda (text)
+                                     (error "Found Invalid XML Character: %s.  See `org-odt-plain-text-replacement-rules'" text)))
+                  (function :tag "Custom Function"
+                            (lambda (text) ""))))))
+
 ;;;; Src Block
 
 (defcustom org-odt-create-custom-styles-for-srcblocks t
@@ -8060,8 +8095,15 @@ contextual information."
    line))
 
 (defun org-odt--encode-plain-text (text &optional no-whitespace-filling)
+  ;; Handle Invalid XML characters.
+  (pcase-dolist (`(,regexp . ,repl) org-odt-plain-text-replacement-rules)
+    (setq text (replace-regexp-in-string regexp repl text t t)))
+  
+  ;; Encode &<>.
   (dolist (pair '(("&" . "&amp;") ("<" . "&lt;") (">" . "&gt;")))
     (setq text (replace-regexp-in-string (car pair) (cdr pair) text t t)))
+
+  ;; Encode TABs and SPCs.
   (if no-whitespace-filling text
     (org-odt--encode-tabs-and-spaces text)))
 
