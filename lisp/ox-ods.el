@@ -505,31 +505,38 @@
 (defvar org-ods-encode-cell-range-function
   'org-ods-encode-cell-range-for-text)
 
-(defun org-ods-encode-cell-range (range adjust)
-  (funcall org-ods-encode-cell-range-function range adjust))
+(defun org-ods-encode-cell-range (range adjust table-name)
+  (funcall org-ods-encode-cell-range-function range adjust table-name))
 
-(defun org-ods-encode-cell-range-for-text (range adjust)
-  (pcase-let* ((`(,first . ,second) range))
-    (cond
-     (second
-      (format "%s:%s"
-	      (org-ods-encode-cell-address first adjust)
-	      (org-ods-encode-cell-address second adjust)))
-     ((null second)
-      (org-ods-encode-cell-address first adjust))
-     (t (error "FIXME")))))
+(defun org-ods-encode-cell-range-for-text (range adjust table-name)
+  (concat
+   (when table-name
+     (format "$%s." table-name))
+   (pcase-let* ((`(,first . ,second) range))
+     (cond
+      (second
+       (format "%s:%s"
+	       (org-ods-encode-cell-address first adjust)
+	       (org-ods-encode-cell-address second adjust)))
+      ((null second)
+       (org-ods-encode-cell-address first adjust))
+      (t (error "FIXME"))))))
 
-(defun org-ods-encode-cell-range-for-ods (range adjust)
-  (pcase-let* ((`(,first . ,second) range))
-    (cond
-     (second
-      (format "[.%s:.%s]"
-	      (org-ods-encode-cell-address first adjust)
-	      (org-ods-encode-cell-address second adjust)))
-     ((null second)
-      (format "[.%s]"
-	      (org-ods-encode-cell-address first adjust)))
-     (t (error "FIXME")))))
+(defun org-ods-encode-cell-range-for-ods (range adjust table-name)
+  (format "[%s]"
+	  (concat
+	   (when table-name
+	     (format "$%s" table-name))
+	   (pcase-let* ((`(,first . ,second) range))
+	     (cond
+	      (second
+	       (format ".%s:.%s"
+		       (org-ods-encode-cell-address first adjust)
+		       (org-ods-encode-cell-address second adjust)))
+	      ((null second)
+	       (format ".%s"
+		       (org-ods-encode-cell-address first adjust)))
+	      (t (error "FIXME")))))))
 
 ;; Named Columns, Fields, and Parameters
 
@@ -658,14 +665,17 @@
 					 (one-or-more (or "<" ">")))))
 		    (field (or (and r-part (optional c-part))
 			       c-part))
-		    (field-range (and field (optional (and ".." field)))))
+		    (field-range (and field (optional (and ".." field))))
+                    (tblname (and alpha (zero-or-more (or alpha digit))))
+                    (remote-field-range (and "remote" "(" tblname "," (zero-or-more space) field-range ")"))
+                    (local-or-remote-field-range (or remote-field-range field-range)))
 	     (with-temp-buffer
 	       (insert rhs1)
 	       (let* ((term)
 		      (field nil))
 		 (goto-char (point-min))
 		 (while (and (not (eobp))
-			     (re-search-forward (rx field-range) nil t))
+			     (re-search-forward (rx local-or-remote-field-range) nil t))
 		   ;; (inspect "SEARCHED")
 		   (setq field (match-string 0))
 		   (cond
@@ -690,7 +700,7 @@
   ;;       		 ;; :tinfo
   ;;       		 ;; (org-ods-glimpse-table tinfo t)
   ;;       		 ))
-  (pcase-let ((`(,first . ,second) field-range))
+  (pcase-let (((odt-map :first :second) field-range))
     (cons (org-ods-derelativize-field tinfo first)
 	  (org-ods-derelativize-field tinfo second 'secondp))))
 
@@ -712,16 +722,18 @@
 	      ;; lhs
 	      ;; (org-ods-encode-cell-address cell-address)
 	      ;; terms
-	      (let ((terms (cl-loop for (ODSn first . second) in rhs-terms-parsed
-				    ;; do (message "first: %S second: %S" first second)
-				    collect
-				    (cons ODSn
-					  (org-ods-encode-cell-range
-					   (cons (org-ods-apply-field-spec-to-cell-address
-						  cell-address (org-ods-derelativize-field tinfo first))
-						 (org-ods-apply-field-spec-to-cell-address
-						  cell-address (org-ods-derelativize-field tinfo second 'secondp)))
-					   (plist-get tinfo :cell-address-adjust))))))
+	      (let ((terms
+                     (thread-last rhs-terms-parsed
+                                  (seq-map
+                                   (pcase-lambda (`(,ODSn . ,(odt-map :first :second :table-name)))
+                                     (cons ODSn
+					   (org-ods-encode-cell-range
+					    (cons (org-ods-apply-field-spec-to-cell-address
+						   cell-address (org-ods-derelativize-field tinfo first))
+						  (org-ods-apply-field-spec-to-cell-address
+						   cell-address (org-ods-derelativize-field tinfo second 'secondp)))
+					    (plist-get tinfo :cell-address-adjust)
+                                            table-name)))))))
 		(format "=%s" (org-ods-substitute-vars-in-expression (append org-ods-calc-f->ods-f-alist
 									     terms)
 								     (plist-get tblfm :rhs2)))
@@ -874,28 +886,41 @@
 					     r-part col-part)))
 		  (and COL-PART
 		       `(col-part -- col-part))))
-       (START-FIELD FIELD)
-       (END-FIELD FIELD)
-       (OPTIONAL-END-FIELD
-	(and (or (and ".." END-FIELD)
+       (FROM-CELL FIELD)
+       (TO-CELL FIELD)
+       (OPTIONAL-TO-CELL
+	(and (or (and ".." TO-CELL)
 		 (and (substring "")
 		      `(_it -- nil)))))
-       (FIELD-RANGE (and START-FIELD OPTIONAL-END-FIELD
-			 `(start end -- (cons start end))))
-       (FIELD-RANGE-STRICT (and bob FIELD-RANGE eob
-				`(it -- it))))
-    (condition-case err
-	(car (peg-parse FIELD-RANGE-STRICT))
-      (peg-search-failed
-       (error "org-ods-parse-field-range: `%s' does NOT parse as a FIELD or a FIELD-RANGE => (%S)"
-	      (buffer-substring-no-properties (point-min) (point-max))
-	      err)))))
+       (LOCAL-CELL-RANGE (and FROM-CELL OPTIONAL-TO-CELL
+			      `(start end -- (list :first start :second end))))
+       (TBLNAME (substring (and [alpha] (* (or [alpha] [digit])))))
+       (SPACES (* [space]))
+       (REMOTE-CELL-RANGE (and "remote" "(" TBLNAME "," SPACES LOCAL-CELL-RANGE ")"
+			       `(table-name field-range -- (org-combine-plists
+							    (list :table-name table-name)
+							    field-range))))
+       (CELL-RANGE (or LOCAL-CELL-RANGE
+		       REMOTE-CELL-RANGE))
+       (CELL-RANGE-STRICT (and bob CELL-RANGE eob
+			       `(it -- it))))
+    (car (peg-parse CELL-RANGE-STRICT))
+    ;; (condition-case err
+    ;;     (car (peg-parse CELL-RANGE-STRICT))
+    ;;   (peg-search-failed
+    ;;    (error "org-ods-parse-field-range: `%s' does NOT parse as a CELL or a CELL-RANGE => (%S)"
+    ;;           (buffer-substring-no-properties (point-min) (point-max))
+    ;;           err)))
+    ))
 
 (defun org-ods-parse-field-range (string)
   (with-temp-buffer
     (save-excursion
       (insert string))
-    (org-ods-do-parse-field-range)))
+    (condition-case err
+	(org-ods-do-parse-field-range)
+      (error
+       (error "org-ods-parse-field-range: `%s' is malformed => (%S)" string err)))))
 
 (defvar org-ods--test-refs
   '(
