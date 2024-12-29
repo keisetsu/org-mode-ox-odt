@@ -652,15 +652,18 @@
 	   for terms = '()
 	   for rhs1 = (plist-get tblfm :rhs1) collect
 	   ;; Actual tokenization
-	   (rx-let ((ABS-N (one-or-more digit))
+	   (rx-let ((THIS-ROW-OR-COL (or "@#" "$#"))
+                    (ABS-N (one-or-more digit))
 		    (SIGN (any "-+"))
 		    (REL-N (and SIGN ABS-N))
-		    (r-part (and "@" (or REL-N
+		    (r-part (and "@" (or THIS-ROW-OR-COL
+                                         REL-N
 					 (and (one-or-more "I") (optional REL-N))
 					 (and (and SIGN (one-or-more "I")) (optional REL-N))
 					 ABS-N
 					 (one-or-more (or "<" ">")))))
-		    (c-part (and "$" (or REL-N
+		    (c-part (and "$" (or THIS-ROW-OR-COL
+                                         REL-N
 					 ABS-N
 					 (one-or-more (or "<" ">")))))
 		    (field (or (and r-part (optional c-part))
@@ -820,7 +823,11 @@
 
 (defun org-ods-do-parse-field-range ()
   (with-peg-rules
-      (
+      ((THIS-ROW "@#"
+                 `(-- 'this-row))
+       (THIS-COL "$#"
+                 `(-- 'this-col))
+       (THIS-ROW-OR-COL (or THIS-ROW THIS-COL))
        (ABS-N (substring (+ [digit]))
 	      `(it -- (string-to-number it)))
        (SIGN (substring (or "-" "+"))
@@ -837,6 +844,8 @@
        (RIGHT-ARROWS (substring (+ ">")))
        (ROW-PART (and "@"
 		      (or
+		       (and THIS-ROW-OR-COL
+			    `(it -- (list :row-num it)))
 		       (and REL-N
 			    `(it -- (list :row-num 'self :row-offset it)))
 		       (and ABS-N
@@ -862,7 +871,9 @@
 			    `(it -- (list :row-num 'last
 					  :row-offset (1- (length it))))))))
        (COL-PART
-	(and "$" (or (and REL-N
+	(and "$" (or (and THIS-ROW-OR-COL
+			  `(it -- (list :col-num it)))
+                     (and REL-N
 			  `(it -- (list :col-num 'self :col-offset it)))
 		     (and ABS-N
 			  `(it
@@ -1027,11 +1038,18 @@
   field)
 
 (defun org-ods-apply-field-spec-to-cell-address (cell-address field)
+  ;; (org-ods-message (list 'org-ods-apply-field-spec-to-cell-address
+  ;;                        :cell-address cell-address
+  ;;                        :field field))
   (when field
     (pcase-let ((`(,r . ,c) cell-address))
       (cons
        ;; Row part
        (pcase (plist-get field :row-num)
+         ('this-row
+	  r)
+         ('this-col
+	  c)
 	 ('self
 	  ;; (:row-full "@-II" :row-num self :row-offset-hline (hline -2))
 	  (pcase (plist-get field :row-offset-hline)
@@ -1044,6 +1062,10 @@
 	 ('() r))
        ;; Col part
        (pcase (plist-get field :col-num)
+         ('this-row
+	  r)
+         ('this-col
+	  c)         
 	 ('self
 	  (+ c (plist-get field :col-offset)))
 	 ((and (pred numberp) n) n)
