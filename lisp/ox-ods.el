@@ -666,7 +666,7 @@
 		    (field (or (and r-part (optional c-part))
 			       c-part))
 		    (field-range (and field (optional (and ".." field))))
-                    (tblname (and alpha (zero-or-more (or alpha digit))))
+                    (tblname (and alpha (zero-or-more (or alpha digit "-"))))
                     (remote-field-range (and "remote" "(" tblname "," (zero-or-more space) field-range ")"))
                     (local-or-remote-field-range (or remote-field-range field-range)))
 	     (with-temp-buffer
@@ -894,7 +894,7 @@
 		      `(_it -- nil)))))
        (LOCAL-CELL-RANGE (and FROM-CELL OPTIONAL-TO-CELL
 			      `(start end -- (list :first start :second end))))
-       (TBLNAME (substring (and [alpha] (* (or [alpha] [digit])))))
+       (TBLNAME (substring (and [alpha] (* (or [alpha] [digit] "-")))))
        (SPACES (* [space]))
        (REMOTE-CELL-RANGE (and "remote" "(" TBLNAME "," SPACES LOCAL-CELL-RANGE ")"
 			       `(table-name field-range -- (org-combine-plists
