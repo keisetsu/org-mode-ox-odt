@@ -707,6 +707,20 @@
     (cons (org-ods-derelativize-field tinfo first)
 	  (org-ods-derelativize-field tinfo second 'secondp))))
 
+(defun org-ods-tblfm-expression->ods-expression (tblfm-expression)
+  (rx-let ((ODS-VAR (and "ODS" (one-or-more digit)))
+	   (SPACES (one-or-more space)))
+    (with-temp-buffer
+      (save-excursion
+	(insert tblfm-expression))
+      (while (re-search-forward
+	      (rx (and "'(org-lookup-first" SPACES (group-n 1 ODS-VAR) SPACES
+                       "'(" (group-n 2 ODS-VAR) ")" SPACES
+                       "'(" (group-n 3 ODS-VAR) "))"))
+	      nil 'noerror)
+	(replace-match (format "INDEX(%s, MATCH(%s, %s), 0)" (match-string 3) (match-string 1) (match-string 2))))
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
 (defun org-tblfm->cell-and-ods-formula (tinfo tblfm)
   (org-ods-message (list 'org-tblfm->cell-and-ods-formula
 			 :table (org-ods-glimpse-table (plist-get tinfo :table) 'quick)
@@ -737,9 +751,11 @@
 						   cell-address (org-ods-derelativize-field tinfo second 'secondp)))
 					    (plist-get tinfo :cell-address-adjust)
                                             table-name)))))))
+                (plist-put tblfm :rhs3
+                           (org-ods-tblfm-expression->ods-expression (plist-get tblfm :rhs2)))
 		(format "=%s" (org-ods-substitute-vars-in-expression (append org-ods-calc-f->ods-f-alist
 									     terms)
-								     (plist-get tblfm :rhs2)))
+								     (plist-get tblfm :rhs3)))
 		;; (format "%s=%s" (org-ods-encode-cell-address (pcase-let ((`(,r . ,c) cell-address))
 		;; 					       (cons r (+ c
 		;; 							  (if has-special-column-p -1 0)))))
