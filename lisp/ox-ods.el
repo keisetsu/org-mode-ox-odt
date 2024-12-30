@@ -700,9 +700,7 @@
 (defun org-ods->derelativize-field-range (tinfo field-range)
   ;; (org-ods-message (list 'org-ods->derelativize-field-range
   ;;       		 :field-range field-range
-  ;;       		 ;; :tinfo
-  ;;       		 ;; (org-ods-glimpse-table tinfo t)
-  ;;       		 ))
+  ;;       		 :tinfo (org-ods-glimpse-table tinfo t)))
   (pcase-let (((odt-map :first :second) field-range))
     (cons (org-ods-derelativize-field tinfo first)
 	  (org-ods-derelativize-field tinfo second 'secondp))))
@@ -718,7 +716,13 @@
                        "'(" (group-n 2 ODS-VAR) ")" SPACES
                        "'(" (group-n 3 ODS-VAR) "))"))
 	      nil 'noerror)
-	(replace-match (format "INDEX(%s, MATCH(%s, %s), 0)" (match-string 3) (match-string 1) (match-string 2))))
+        ;; - Look up values with VLOOKUP, INDEX, or MATCH - Microsoft Support ::
+        ;;     https://support.microsoft.com/en-us/office/look-up-values-with-vlookup-index-or-match-68297403-7c3c-4150-9e3c-4d348188976b
+        ;; - Documentation/Calc Functions/MATCH - The Document Foundation Wiki ::
+        ;;     https://wiki.documentfoundation.org/Documentation/Calc_Functions/MATCH
+        ;; - Documentation/Calc Functions/INDEX - The Document Foundation Wiki ::
+        ;;     https://wiki.documentfoundation.org/Documentation/Calc_Functions/INDEX
+	(replace-match (format "INDEX(%s, MATCH(%s, %s, 0), 1)" (match-string 3) (match-string 1) (match-string 2))))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
 (defun org-tblfm->cell-and-ods-formula (tinfo tblfm)
@@ -740,19 +744,23 @@
 	      ;; (org-ods-encode-cell-address cell-address)
 	      ;; terms
 	      (let ((terms
-                     (thread-last rhs-terms-parsed
-                                  (seq-map
-                                   (pcase-lambda (`(,ODSn . ,(odt-map :first :second :table-name)))
-                                     (cons ODSn
-					   (org-ods-encode-cell-range
-					    (cons (org-ods-apply-field-spec-to-cell-address
-						   cell-address (org-ods-derelativize-field tinfo first))
-						  (org-ods-apply-field-spec-to-cell-address
-						   cell-address (org-ods-derelativize-field tinfo second 'secondp)))
-					    (plist-get tinfo :cell-address-adjust)
-                                            table-name)))))))
-                (plist-put tblfm :rhs3
-                           (org-ods-tblfm-expression->ods-expression (plist-get tblfm :rhs2)))
+		     (thread-last rhs-terms-parsed
+				  (seq-map
+				   (pcase-lambda (`(,ODSn . ,(odt-map :first :second :table-name)))
+				     (let ((remote-tinfo (when table-name
+							   (org-ods--table-name->tinfo table-name))))
+				       (cl-assert (or (null table-name) remote-tinfo) t)
+				       (cons ODSn
+					     (org-ods-encode-cell-range
+					      (cons
+					       (org-ods-apply-field-spec-to-cell-address
+						cell-address (org-ods-derelativize-field (or remote-tinfo tinfo) first))
+					       (org-ods-apply-field-spec-to-cell-address
+						cell-address (org-ods-derelativize-field (or remote-tinfo tinfo) second 'secondp)))
+					      (plist-get tinfo :cell-address-adjust)
+					      table-name))))))))
+		(plist-put tblfm :rhs3
+			   (org-ods-tblfm-expression->ods-expression (plist-get tblfm :rhs2)))
 		(format "=%s" (org-ods-substitute-vars-in-expression (append org-ods-calc-f->ods-f-alist
 									     terms)
 								     (plist-get tblfm :rhs3)))
@@ -988,6 +996,9 @@
     ("@I..@II" (:row-num (hline 1)) :row-num (hline 2))))
 
 (defun org-ods-derelativize-field (tinfo field &optional secondp)
+  ;; (org-ods-message (list 'org-ods-derelativize-field
+  ;;                        :field field
+  ;;                        :tinfo (org-ods-glimpse-table tinfo t)))
   ;; Modifies field by side-effect.  Also returns it.
   (pcase-let ((`(,rmin . ,cmin) '(1 . 1))
 	      (`(,rmax . ,cmax) (plist-get tinfo :dimensions)))
@@ -1686,39 +1697,71 @@ from `org-odt-convert-processes'."
 
 ;;;; Filters
 
+(defun org-ods--build-table->tinfo-alist (data info)
+  (org-element-map data 'table
+    (lambda (table)
+      (cons table (org-ods-table->table-info table)))
+    info nil nil t))
+
+(defun org-ods-glimpse-tinfo-alist (at)
+  (thread-last org-ods-table->tinfo-alist
+	       (seq-do
+		(pcase-lambda (`(,table . ,tinfo))
+		  (org-ods-message (list 'org-ods-glimpse-tinfo-alist
+                                         :at at
+					 :table-name (org-element-property :name table)
+					 :tinfo (org-ods-glimpse-table tinfo t)))))))
+
+(defun org-ods--table-name->tinfo (table-name)
+  ;; (org-ods-glimpse-tinfo-alist 'org-ods--table-name->tinfo)
+  (let ((tinfo (thread-last org-ods-table->tinfo-alist
+			    (seq-find
+			     (pcase-lambda (`(,table . ,_table-info))
+			       (string= table-name
+				        (org-element-property :name table))))
+                            cdr)))
+    (prog1 tinfo
+      ;; (org-ods-message (list 'org-ods--table-name->tinfo
+      ;;                        :remote-table-name table-name
+      ;;                        :tinfo (org-ods-glimpse-table tinfo t)))
+      )))
+
+(defvar org-ods-table->tinfo-alist nil)
+
 (defun org-ods--translate-tblfms-to-ods-formulae (data _backend info)
-  (let ((pp-table
-	 (lambda (table)
-	   (concat "\n" (substring-no-properties
-			 (org-element-interpret-data table))))))
-    (org-element-map data 'table
-      (lambda (table)
-	(let* ((table-in (funcall pp-table table)))
-	  (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae)
-			   (org-ods-debug--op-on-element "TRANSLATING" table))
-	  (let* ((tinfo (org-ods-table->table-info table))
-		 (replacement-values (org-ods-special-cell-address/org->value tinfo)))
-	    (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
-				   :tinfo (org-ods-glimpse-table tinfo t)
-				   :replacement-values replacement-values))
-	    (org-ods-insert-ods-formula tinfo)
-	    (org-ods-clear-special-rows tinfo)
-	    (cl-loop for (cell-address/org . value) in replacement-values
-		     do (org-ods-cell-address/org->value tinfo cell-address/org value))
-	    (org-ods-remove-special-column tinfo))
-	  ;; Side-effects above has modified the table.  Log what the
-	  ;; table looks after translation.
-	  (let ((table-out (funcall pp-table
-				    (org-ods-lisp-table-to-org-table
-				     (org-ods-table-element-to-lisp-table table)))))
-	    (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
-				   :org-table table-in
-				   :translated-table table-out)))))
-      info nil nil t))
-  (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
-			 :odt-automatic-styles (plist-get info :odt-automatic-styles)
-			 ;; :data data
-			 ))
+  (let ((org-ods-table->tinfo-alist (org-ods--build-table->tinfo-alist data info)))
+    (org-ods-glimpse-tinfo-alist 'org-ods--translate-tblfms-to-ods-formulae)
+    (let ((pp-table
+	   (lambda (table)
+	     (concat "\n" (substring-no-properties
+			   (org-element-interpret-data table))))))
+      (thread-last org-ods-table->tinfo-alist
+                   (seq-do
+                    (pcase-lambda (`(,table . ,tinfo))
+                      (let* ((table-in (funcall pp-table table)))
+	                (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae)
+			                 (org-ods-debug--op-on-element "TRANSLATING" table))
+	                (let* ((replacement-values (org-ods-special-cell-address/org->value tinfo)))
+	                  (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
+				                 :tinfo (org-ods-glimpse-table tinfo t)
+				                 :replacement-values replacement-values))
+	                  (org-ods-insert-ods-formula tinfo)
+	                  (org-ods-clear-special-rows tinfo)
+	                  (cl-loop for (cell-address/org . value) in replacement-values
+		                   do (org-ods-cell-address/org->value tinfo cell-address/org value))
+	                  (org-ods-remove-special-column tinfo))
+	                ;; Side-effects above has modified the table.  Log what the
+	                ;; table looks after translation.
+	                (let ((table-out (funcall pp-table
+				                  (org-ods-lisp-table-to-org-table
+				                   (org-ods-table-element-to-lisp-table table)))))
+	                  (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
+				                 :org-table table-in
+				                 :translated-table table-out))))))))
+    (org-ods-message (list 'org-ods--translate-tblfms-to-ods-formulae
+			   :odt-automatic-styles (plist-get info :odt-automatic-styles)
+			   ;; :data data
+			   )))
   data)
 
 ;;;; Transcoder
