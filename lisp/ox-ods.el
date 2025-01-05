@@ -646,56 +646,21 @@
     ("vmin" . "MIN")
     ("vsum" . "SUM")))
 
+(defvar ORG-ODS-FIELD-VAR-PREFIX
+  "TBLFM")
+
 (defun org-ods-tokenize-tblfms (tblfms)
-  (cl-loop with n = 0
-	   for tblfm in tblfms
-	   for terms = '()
-	   for rhs1 = (plist-get tblfm :rhs1) collect
-	   ;; Actual tokenization
-	   (rx-let ((THIS-ROW-OR-COL (or "@#" "$#"))
-                    (ABS-N (one-or-more digit))
-		    (SIGN (any "-+"))
-		    (REL-N (and SIGN ABS-N))
-		    (r-part (and "@" (or THIS-ROW-OR-COL
-                                         REL-N
-					 (and (one-or-more "I") (optional REL-N))
-					 (and (and SIGN (one-or-more "I")) (optional REL-N))
-					 ABS-N
-					 (one-or-more (or "<" ">")))))
-		    (c-part (and "$" (or THIS-ROW-OR-COL
-                                         REL-N
-					 ABS-N
-					 (one-or-more (or "<" ">")))))
-		    (field (or (and r-part (optional c-part))
-			       c-part))
-		    (field-range (and field (optional (and ".." field))))
-                    (tblname (and alpha (zero-or-more (or alpha digit "-"))))
-                    (remote-field-range (and "remote" "(" tblname "," (zero-or-more space) field-range ")"))
-                    (local-or-remote-field-range (or remote-field-range field-range)))
-	     (with-temp-buffer
-	       (insert rhs1)
-	       (let* ((term)
-		      (field nil))
-		 (goto-char (point-min))
-		 (while (and (not (eobp))
-			     (re-search-forward (rx local-or-remote-field-range) nil t))
-		   ;; (inspect "SEARCHED")
-		   (setq field (match-string 0))
-		   (cond
-		    ((org-string-nw-p field)
-		     (replace-match (setq term (format "ODS%d" n)))
-		     ;; (inspect "REPLACED")
-		     (push (cons term field) terms)
-		     (cl-incf n))
-		    (t (forward-char 1))))
-		 ;; (inspect "DONE")
-		 (append tblfm
-			 (list :rhs2
-			       (buffer-substring-no-properties (point-min) (point-max))
-			       :terms terms
-			       :lhs-parsed (org-ods-parse-field-range (plist-get tblfm :lhs))
-			       :rhs-terms-parsed (cl-loop for (name . field-range) in terms
-							  collect (cons name (org-ods-parse-field-range field-range))))))))))
+  (cl-loop for tblfm in tblfms
+	   for rhs1 = (plist-get tblfm :rhs1)
+	   counting tblfm into TBLFMN
+	   collect
+	   (pcase-let* ((`(,_ . ,(odt-map :tokenized-string :terms :terms-parsed))
+			 (org-ods-tokenize rhs1 (format "%s_%02d" ORG-ODS-FIELD-VAR-PREFIX TBLFMN))))
+	     (append tblfm
+		     (list :rhs2 (or tokenized-string rhs1)
+			   :terms terms
+			   :lhs-parsed (org-ods-parse-field-range (plist-get tblfm :lhs))
+			   :rhs-terms-parsed terms-parsed)))))
 
 (defun org-ods->derelativize-field-range (tinfo field-range)
   ;; (org-ods-message (list 'org-ods->derelativize-field-range
@@ -706,7 +671,8 @@
 	  (org-ods-derelativize-field tinfo second 'secondp))))
 
 (defun org-ods-tblfm-expression->ods-expression (tblfm-expression)
-  (rx-let ((ODS-VAR (and "ODS" (one-or-more digit)))
+  (rx-let ((ODS-VAR (and ;; ORG-ODS-FIELD-VAR-PREFIX
+                     "TBLFM" "_" (one-or-more digit) "_" (one-or-more digit)))
 	   (SPACES (one-or-more space)))
     (with-temp-buffer
       (save-excursion
@@ -845,7 +811,7 @@
 
 ;;; Field and Field Ranges
 
-(defun org-ods-do-parse-field-range ()
+(defun org-ods-do-parse-field-range (op)
   (with-peg-rules
       ((THIS-ROW "@#"
                  `(-- 'this-row))
@@ -939,23 +905,84 @@
 		       REMOTE-CELL-RANGE))
        (CELL-RANGE-STRICT (and bob CELL-RANGE eob
 			       `(it -- it))))
-    (car (peg-parse CELL-RANGE-STRICT))
+    ;; (car (peg-parse CELL-RANGE-STRICT))
     ;; (condition-case err
     ;;     (car (peg-parse CELL-RANGE-STRICT))
     ;;   (peg-search-failed
     ;;    (error "org-ods-parse-field-range: `%s' does NOT parse as a CELL or a CELL-RANGE => (%S)"
     ;;           (buffer-substring-no-properties (point-min) (point-max))
     ;;           err)))
-    ))
+    (let ((start (point)))
+      (pcase-exhaustive op
+	(`STRICT
+	 (condition-case err
+	     (car (peg-parse CELL-RANGE-STRICT))
+	   (peg-search-failed
+	    (message "`%s' is not a CELL or a CELL-RANGE => {%s}"
+                     (buffer-substring-no-properties start (point-max)) err)
+	    (goto-char start)
+	    nil)))
+	(`AT-POINT
+	 (condition-case err
+	     (car (peg-parse CELL-RANGE))
+	   (peg-search-failed
+	    (message "`%s' doesn't begin with a CELL or a CELL-RANGE => {%s}"
+		     (buffer-substring-no-properties start (point-max))
+		     err)
+	    (goto-char start)
+	    nil)))
+	(`SEEK
+	 (catch 'found
+	   (while (not (eobp))
+	     (let* ((start (point))
+		    (field-range (condition-case _err
+				     (car (peg-parse CELL-RANGE))
+				   (peg-search-failed
+				    (goto-char start)
+				    nil))))
+	       (cond
+		(field-range
+		 (throw 'found
+			(list :from start
+			      :to (point)
+			      :as-string (buffer-substring-no-properties start (point))
+			      :as-object field-range)))
+		(t
+		 (forward-char 1)))))))))))
 
 (defun org-ods-parse-field-range (string)
   (with-temp-buffer
     (save-excursion
       (insert string))
-    (condition-case err
-	(org-ods-do-parse-field-range)
-      (error
-       (error "org-ods-parse-field-range: `%s' is malformed => (%S)" string err)))))
+    (org-ods-do-parse-field-range 'STRICT)))
+
+(defun org-ods-tokenize (string TAG)
+  (with-temp-buffer
+    (save-excursion
+      (insert string))
+    (cl-loop for field-range = (org-ods-do-parse-field-range 'SEEK)
+	     while field-range
+	     count field-range into i
+	     and collecting (pcase-let* ((term (format "%s_%02d" TAG i))
+					 ((odt-map :from :to :as-string :as-object) field-range))
+			      (delete-region from to)
+			      (insert term)
+			      (list term :as-string as-string :as-object as-object))
+	     into terms
+	     finally return (when terms
+			      (list string
+				    :tokenized-string (buffer-substring-no-properties (point-min) (point-max))
+				    :terms (thread-last terms
+							(seq-map
+							 (pcase-lambda (`(,ODSn . ,(odt-map :as-string)))
+							   (cons ODSn as-string))))
+				    :terms-parsed (thread-last terms
+							       (seq-map
+								(pcase-lambda (`(,ODSn . ,(odt-map :as-object)))
+								  (cons ODSn as-object))))
+				    ;; :tokens terms
+				    )))))
+
 
 (defvar org-ods--test-refs
   '(
@@ -1697,6 +1724,8 @@ from `org-odt-convert-processes'."
 
 ;;;; Filters
 
+(defvar org-ods-table->tinfo-alist nil)
+
 (defun org-ods--build-table->tinfo-alist (data info)
   (org-element-map data 'table
     (lambda (table)
@@ -1725,8 +1754,6 @@ from `org-odt-convert-processes'."
       ;;                        :remote-table-name table-name
       ;;                        :tinfo (org-ods-glimpse-table tinfo t)))
       )))
-
-(defvar org-ods-table->tinfo-alist nil)
 
 (defun org-ods--translate-tblfms-to-ods-formulae (data _backend info)
   (let ((org-ods-table->tinfo-alist (org-ods--build-table->tinfo-alist data info)))
