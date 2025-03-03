@@ -1,7 +1,7 @@
 #+ODT_PREFERRED_OUTPUT_FORMAT: pdf
 
-#+BIBLIOGRAPHY: /home/kjambunathan/src1/org-mode-ox-odt/master/testing/examples/odt/novices.bib
-#+BIBLIOGRAPHY: /home/kjambunathan/src1/org-mode-ox-odt/master/testing/examples/odt/biblatex-examples/biblatex-examples.bib
+#+BIBLIOGRAPHY: ../novices.bib
+#+BIBLIOGRAPHY: ../biblatex-examples/biblatex-examples.bib
 
 * COMMENT Chicago Manual of Style (Author-Date)
 :PROPERTIES:
