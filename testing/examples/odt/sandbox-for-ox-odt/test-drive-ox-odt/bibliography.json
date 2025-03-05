@@ -1,0 +1,29 @@
+[
+  {
+    "id": "butlerJosephButlerFifteen2017",
+    "author": [
+      {
+        "family": "Butler",
+        "given": "Joseph"
+      }
+    ],
+    "citation-key": "butlerJosephButlerFifteen2017",
+    "collection-title": "British moral philosophers",
+    "editor": [
+      {
+        "family": "McNaughton",
+        "given": "David"
+      }
+    ],
+    "event-place": "Oxford",
+    "ISBN": "978-0-19-965755-1",
+    "issued": {
+      "date-parts": [["2017"]]
+    },
+    "language": "eng",
+    "publisher": "Oxford university press",
+    "publisher-place": "Oxford",
+    "title": "Joseph Butler: Fifteen sermons preached at the Rolls Chapel and other writings on ethics",
+    "type": "book"
+  }
+]

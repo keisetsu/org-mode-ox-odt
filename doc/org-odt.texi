@@ -6,6 +6,11 @@
 @documentlanguage en
 @c %**end of header
 
+@dircategory Misc
+@direntry
+* org-odt.              OpenDocument Text Exporter for Emacs' Org Mode.
+@end direntry
+
 @finalout
 @titlepage
 @title OpenDocument Text Exporter for Emacs' Org Mode
@@ -32,6 +37,7 @@ user of the stock Emacs backend, and want to learn about new features
 @emph{exclusive} to this fork jump right to @ref{What is New} section.
 
 @contents
+
 @end ifnottex
 
 @menu
@@ -1201,9 +1207,9 @@ configure the above variables as shown below.
 
 @lisp
 (setq org-latex-to-mathml-convert-command
-      "java -jar %j -unicode -force -df %o %I"
-      org-latex-to-mathml-jar-file
-      "/path/to/mathtoweb.jar")
+           "java -jar %j -unicode -force -df %o %I"
+           org-latex-to-mathml-jar-file
+           "/path/to/mathtoweb.jar")
 @end lisp
 
 You can use the following commands to quickly verify the
@@ -1289,7 +1295,7 @@ embedded images with the string @samp{Illustration} (instead of the default
 
 @lisp
 (setq org-odt-category-strings
-      '(("en" "Table" "Illustration" "Equation" "Equation")))
+        '(("en" "Table" "Illustration" "Equation" "Equation")))
 @end lisp
 
 With this, previous image will be captioned as below in the exported
@@ -1572,13 +1578,13 @@ export the table that follows.
 
 @lisp
 (setq org-odt-table-styles
-      (append org-odt-table-styles
-              '(("TableWithHeaderRowAndColumn" "Custom"
-                 ((use-first-row-styles . t)
-                  (use-first-column-styles . t)))
-                ("TableWithFirstRowandLastRow" "Custom"
-                 ((use-first-row-styles . t)
-                  (use-last-row-styles . t))))))
+        (append org-odt-table-styles
+                '(("TableWithHeaderRowAndColumn" "Custom"
+                   ((use-first-row-styles . t)
+                    (use-first-column-styles . t)))
+                  ("TableWithFirstRowandLastRow" "Custom"
+                   ((use-first-row-styles . t)
+                    (use-last-row-styles . t))))))
 @end lisp
 
 @example
@@ -1703,13 +1709,13 @@ styles in that template.
 
 @lisp
 (setq org-odt-table-styles
-      (append org-odt-table-styles
-              '(("TableWithHeaderRowAndColumn" "Custom"
-                 ((use-first-row-styles . t)
-                  (use-first-column-styles . t)))
-                ("TableWithFirstRowandLastRow" "Custom"
-                 ((use-first-row-styles . t)
-                  (use-last-row-styles . t))))))
+           (append org-odt-table-styles
+                   '(("TableWithHeaderRowAndColumn" "Custom"
+                      ((use-first-row-styles . t)
+                       (use-first-column-styles . t)))
+                     ("TableWithFirstRowandLastRow" "Custom"
+                      ((use-first-row-styles . t)
+                       (use-last-row-styles . t))))))
 @end lisp
 
 @item
