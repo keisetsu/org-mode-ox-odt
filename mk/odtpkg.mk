@@ -52,8 +52,36 @@ odtpkg: ELPA_PKG_VERSION0_L			= $(shell $(BATCH) --eval '(prin1 (version-to-list
 
 odtpkg: ELPA_PKG_DOC				= "OpenDocument Text Exporter for Org Mode"
 
-odtpkg: ELPA_PKG_REQ				= (org \"$(ELPA_PKG_VERSION0)\")
-odtpkg: ELPA_PKG_REQ_L				= (org $(ELPA_PKG_VERSION0_L))
+odtpkg: ELPA_PKG_REQ				= (org \"$(ELPA_PKG_VERSION0)\") \
+										(citeproc \"20240722.1110\") \
+										(peg \"1.0.1\") \
+										(rnc-mode \"0.3\") \
+										(seq \"2.24\") \
+
+# Dependencies for `ox-odt' package distributed from https://kjambunathan.github.io/elpa/
+# ========================================================================================
+#
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | Package & Description                               |                                       Version | Distributed from |
+# |                                                     | (as on Mar 5, 2025 @ Emacs GNU Emacs 31.0.50) |                  |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | org: Outline-based notes management and organizer   |                                        9.7.11 | built-in         |
+# |                                                     |                                        9.7.24 | gnu              |
+# |                                                     |                       9.8pre0.20250302.151417 | gnu-devel        |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | citeproc: A CSL 1.0.2 Citation Processor            |                                 20240722.1110 | melpa            |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | peg: Parsing Expression Grammars in Emacs Lisp      |                                         1.0.1 | built-in         |
+# |                                                     |                                         1.0.1 | gnu              |
+# |                                                     |                        1.0.1.0.20221221.81502 | gnu-devel        |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | rnc-mode: Emacs mode to edit Relax-NG Compact files |                                           0.3 | gnu              |
+# |                                                     |                          0.3.0.20221221.81910 | gnu-devel        |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
+# | seq: Sequence manipulation functions                |                                          2.24 | built-in         |
+# |                                                     |                                          2.24 | gnu              |
+# |                                                     |                        2.24.0.20240201.135317 | gnu-devel        |
+# |-----------------------------------------------------+-----------------------------------------------+------------------|
 
 odtpkg: ELPA_PKG_DIR				= $(ELPA_PKG_NAME)-$(ELPA_PKG_VERSION)
 
