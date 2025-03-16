@@ -78,7 +78,7 @@
 ;; dependencies under the sandbox directory.
 (package-initialize)
 (package-refresh-contents)
-(package-install "ox-odt")
+(package-install 'ox-odt)
 (package-upgrade-all)
 
 ;; Load ODS and ODT exporters.  Load `citeproc' so that ODT exporter
