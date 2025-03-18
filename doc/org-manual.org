@@ -120,16 +120,6 @@ visited, i.e., where no Org built-in function have been loaded.
 Otherwise autoload Org functions will mess up the installation.
 #+end_quote
 
-To avoid interference with built-in Org mode, you can use command line:
-
-#+begin_src sh
-emacs -Q -batch -eval "(progn (require 'package) (package-initialize) (package-refresh-contents) (package-upgrade 'org))"
-#+end_src
-
-This approach has the advantage of isolating the upgrade process from
-a running Emacs session, ensuring that version conflicts can not
-arise.
-
 *** Using Org's git repository
 :PROPERTIES:
 :UNNUMBERED: notoc
@@ -1210,10 +1200,11 @@ to disable them individually.
   the item to meaningful levels in the list and eventually get it back
   to its initial position.
 
-- {{{kbd(M-RET)}}} (~org-insert-heading~) ::
+- {{{kbd(M-RET)}}} (~org-insert-item~) ::
 
   #+kindex: M-RET
-  #+findex: org-insert-heading
+  #+findex: org-insert-item
+  #+findex: org-meta-return
   #+vindex: org-M-RET-may-split-line
   Insert new item at current level.  With a prefix argument, force a
   new heading (see [[*Structure Editing]]).  If this command is used
@@ -3403,7 +3394,7 @@ options:
 
 | Link Type  | Example                                                            |
 |------------+--------------------------------------------------------------------|
-| http       | =http://staff.science.uva.nl/c.dominik/=                           |
+| http       | =http://orgmode.org/=                                              |
 | https      | =https://orgmode.org/=                                             |
 | doi        | =doi:10.1000/182=                                                  |
 | file       | =file:/home/dominik/images/jupiter.jpg=                            |
@@ -13633,7 +13624,7 @@ backend by default in-lines that image.  For example:
 ~org-html-inline-images~.
 
 On the other hand, if the description part of the Org link is itself
-another link, such as =file:= or =http:= URL pointing to an image, the
+another link, such as =file:= or =https:= URL pointing to an image, the
 HTML export backend in-lines this image and links to the main image.
 This Org syntax enables the backend to link low-resolution thumbnail
 to the high-resolution version of the image, as shown in this example:
@@ -13938,7 +13929,7 @@ terminology.  You may refer to https://tug.org/begin.html to get
 familiar with LaTeX basics.  Users with LaTeX installed may also run
 =texdoc latex= from terminal to open LaTeX introduction [fn:: The
 command will open a PDF file, which is also available for download
-from http://mirrors.ctan.org/info/latex-doc-ptr/latex-doc-ptr.pdf]
+from https://mirrors.ctan.org/info/latex-doc-ptr/latex-doc-ptr.pdf]
 
 *** LaTeX/PDF export commands
 :PROPERTIES:
@@ -15220,7 +15211,7 @@ document in one of the following ways:
   ~org-latex-to-mathml-jar-file~.
 
   If you prefer to use MathToWeb[fn:: See
-  [[http://www.mathtoweb.com/cgi-bin/mathtoweb_home.pl][MathToWeb]].]
+  [[https://mathtoweb.sourceforge.io/][MathToWeb]].]
   as your converter, you can configure the above variables as shown
   below.
 
@@ -19434,7 +19425,7 @@ unexpected results (=444= is the same as =o674=).
 Two other shorthands are recognized, ls-style strings like
 =rw-r--r--=, and chmod-style permissions like =g+w=.
 Note that chmod-style permissions are based on
-~org-babel-tangle-default-file-mode~, which is =#o544= by default.
+~org-babel-tangle-default-file-mode~, which is =#o644= by default.
 
 When =:tangle-mode= and =:shebang= are both specified, the give
 =:tangle-mode= will override the permissions from =:shebang=.  When
@@ -21232,14 +21223,14 @@ name, e.g., =Org: store-link= and enter this as /Location/:
 
 #+begin_example
 javascript:location.href='org-protocol://store-link?' +
-      new URLSearchParams({url:location.href, title:document.title});
+      new URLSearchParams({url:location.href, title:document.title});void(0);
 #+end_example
 
 Title is an optional parameter.  Another expression was recommended earlier:
 
 #+begin_example
 javascript:location.href='org-protocol://store-link?url='+
-      encodeURIComponent(location.href);
+      encodeURIComponent(location.href);void(0);
 #+end_example
 
 The latter form is compatible with older Org versions from 9.0 to 9.4.
@@ -21264,6 +21255,7 @@ javascript:location.href='org-protocol://capture?' +
       new URLSearchParams({
             template: 'x', url: window.location.href,
             title: document.title, body: window.getSelection()});
+      void(0);
 #+end_example
 
 You might have seen another expression:
@@ -21272,7 +21264,7 @@ You might have seen another expression:
 javascript:location.href='org-protocol://capture?template=x'+
       '&url='+encodeURIComponent(window.location.href)+
       '&title='+encodeURIComponent(document.title)+
-      '&body='+encodeURIComponent(window.getSelection());
+      '&body='+encodeURIComponent(window.getSelection());void(0);
 #+end_example
 
 It is a bit more cluttered than the former one, but it is compatible
@@ -21305,7 +21297,7 @@ a bookmark with the following location:
 
 #+begin_example
 javascript:location.href='org-protocol://open-source?&url='+
-      encodeURIComponent(location.href)
+      encodeURIComponent(location.href);void(0)
 #+end_example
 
 #+vindex: org-protocol-project-alist
@@ -23031,7 +23023,7 @@ that are mentioned in the manual.  For a more complete list, use
 
 This manual is for Org version {{{version}}}.
 
-Copyright \copy 2004--2024 Free Software Foundation, Inc.
+Copyright \copy 2004--2025 Free Software Foundation, Inc.
 
 #+begin_quote
 Permission is granted to copy, distribute and/or modify this document

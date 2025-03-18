@@ -1,8 +1,9 @@
 ;;; org-macs.el --- Top-level Definitions for Org -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten.dominik@gmail.com>
+;; Maintainer: Ihor Radchenko <yantar92 at posteo dot net>
 ;; Keywords: outlines, hypermedia, calendar, text
 ;; URL: https://orgmode.org
 ;;
@@ -33,6 +34,7 @@
 
 (require 'cl-lib)
 (require 'format-spec)
+(eval-when-compile (require 'subr-x))  ; For `when-let*', Emacs < 29
 
 ;;; Org version verification.
 

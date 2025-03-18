@@ -1,7 +1,7 @@
 ;;; org.el --- Outline-based notes management and organizer -*- lexical-binding: t; -*-
 
 ;; Carstens outline-mode for keeping track of everything.
-;; Copyright (C) 2004-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2025 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten.dominik@gmail.com>
 ;; Maintainer: Bastien Guerry <bzg@gnu.org>
@@ -9,7 +9,7 @@
 ;; URL: https://orgmode.org
 ;; Package-Requires: ((emacs "26.1"))
 
-;; Version: 9.7.14
+;; Version: 9.7.25
 
 ;; This file is part of GNU Emacs.
 ;;
@@ -2949,10 +2949,13 @@ is better to limit inheritance to certain tags using the variables
 	  (const :tag "List them, indented with leading dots" indented)))
 
 (defcustom org-tags-sort-function nil
-  "When set, tags are sorted using this function as a comparator."
+  "When set, tags are sorted using this function as a comparator.
+When the value is nil, use default sorting order.  The default sorting
+is alphabetical, except in `org-set-tags' where no sorting is done by
+default."
   :group 'org-tags
   :type '(choice
-	  (const :tag "No sorting" nil)
+	  (const :tag "Default sorting" nil)
 	  (const :tag "Alphabetical" org-string<)
 	  (const :tag "Reverse alphabetical" org-string>)
 	  (function :tag "Custom function" nil)))
@@ -8278,9 +8281,13 @@ See the docstring of `org-open-file' for details."
   ;; link abbreviations. So, suppressing parser complains about
   ;; non-Org buffer to keep the feature working at least to the extent
   ;; it did before.
+  (require 'warnings) ; Emacs <30
+  (defvar warning-suppress-types) ; warnings.el
   (let ((warning-suppress-types
          (cons '(org-element org-element-parser)
                warning-suppress-types)))
+    ;; FIXME: Suppress warning in Emacs <30
+    ;; (ignore warning-suppress-types)
     (org-open-at-point)))
 
 (defvar org-window-config-before-follow-link nil
@@ -8600,7 +8607,7 @@ When point is a footnote definition, move to the first reference
 found.  If it is on a reference, move to the associated
 definition.
 
-When point is on a src-block of inline src-block, open its result.
+When point is on a src-block or inline src-block, open its result.
 
 When point is on a citation, follow it.
 
@@ -18541,17 +18548,22 @@ object (e.g., within a comment).  In these case, you need to use
      ;; if `org-return-follows-link' allows it.  Tolerate fuzzy
      ;; locations, e.g., in a comment, as `org-open-at-point'.
      ((and org-return-follows-link
-	   (or (and (eq 'link element-type)
-		    ;; Ensure point is not on the white spaces after
-		    ;; the link.
-		    (let ((origin (point)))
-		      (org-with-point-at (org-element-end context)
-			(skip-chars-backward " \t")
-			(> (point) origin))))
-	       (org-in-regexp org-ts-regexp-both nil t)
-	       (org-in-regexp org-tsr-regexp-both nil  t)
-               (org-element-lineage context '(citation citation-reference) 'include-self)
-	       (org-in-regexp org-link-any-re nil t)))
+	   (or
+            (let ((context
+                   (org-element-lineage
+                    context
+                    '(citation citation-reference link)
+                    'include-self)))
+              (and context
+                   ;; Ensure point is not on the white spaces after
+                   ;; the link.
+                   (let ((origin (point)))
+                     (org-with-point-at (org-element-end context)
+                       (skip-chars-backward " \t")
+                       (> (point) origin)))))
+            (org-in-regexp org-ts-regexp-both nil t)
+            (org-in-regexp org-tsr-regexp-both nil  t)
+            (org-in-regexp org-link-any-re nil t)))
       (call-interactively #'org-open-at-point))
      ;; Insert newline in heading, but preserve tags.
      ((and (not (bolp))

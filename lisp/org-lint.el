@@ -1,6 +1,6 @@
 ;;; org-lint.el --- Linting for Org documents        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;; Keywords: outlines, hypermedia, calendar, text
@@ -718,6 +718,10 @@ Use :header-args: instead"
 	(pcase type
 	  ((or "attachment" "file")
 	   (let* ((path (org-element-property :path l))
+                  (path (if (and (equal type "attachment")
+                                 (string-match "::\\(.*\\)\\'" path))
+		            (substring path 0 (match-beginning 0))
+                          path))
 		  (file (if (string= type "file")
 			    path
                           (org-with-point-at (org-element-begin l)

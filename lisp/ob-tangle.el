@@ -1,6 +1,6 @@
 ;;; ob-tangle.el --- Extract Source Code From Org Files -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research
@@ -159,9 +159,10 @@ result.  The default value is `org-remove-indentation'."
   :type 'function)
 
 (defcustom org-babel-tangle-default-file-mode #o644
-  "The default mode used for tangled files, as an integer.
-The default value 420 correspands to the octal #o644, which is
-read-write permissions for the user, read-only for everyone else."
+  "The default mode, an integer value, only used when the :tangle-mode
+header argument specifies chmod-style symbolic notation.  The default
+value 420 corresponds to the octal #o644, which is read-write
+permissions for the user, read-only for everyone else."
   :group 'org-babel-tangle
   :package-version '(Org . "9.6")
   :type 'integer)
@@ -227,13 +228,11 @@ Return list of the tangled file names."
              (org-babel-tangle nil target-file lang-re)))))
 
 (defun org-babel-tangle-publish (_ filename pub-dir)
-  "Tangle FILENAME and place the results in PUB-DIR."
-  (unless (file-exists-p pub-dir)
-    (make-directory pub-dir t))
-  (setq pub-dir (file-name-as-directory pub-dir))
-  ;; Rename files to avoid copying to same file when publishing to ./
-  ;; `copy-file' would throw an error when copying file to self.
-  (mapc (lambda (el) (rename-file el pub-dir t))
+  "Tangle FILENAME and copy the tangled file to PUB-DIR."
+  (require 'ox-publish)
+  (declare-function org-publish-attachment "ox-publish"
+                    (plist filename pub-dir))
+  (mapc (lambda (el) (org-publish-attachment nil el pub-dir))
         (org-babel-tangle-file filename)))
 
 ;;;###autoload

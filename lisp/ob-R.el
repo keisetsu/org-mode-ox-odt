@@ -1,6 +1,6 @@
 ;;; ob-R.el --- Babel Functions for R                -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;;	Dan Davison
@@ -486,7 +486,8 @@ by `org-babel-comint-async-filter'."
    session (current-buffer)
    "^\\(?:[>.+] \\)*\\[1\\] \"ob_comint_async_R_\\(start\\|end\\|file\\)_\\(.+\\)\"$"
    'org-babel-chomp
-   'ob-session-async-R-value-callback)
+   'ob-session-async-R-value-callback
+   'disable-prompt-filtering)
   (cl-case result-type
     (value
      (let ((tmp-file (org-babel-temp-file "R-")))

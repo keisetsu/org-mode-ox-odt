@@ -1,6 +1,6 @@
 ;;; ox-org.el --- Org Backend for Org Export Engine -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou@gmail.com>
 ;; Keywords: org, text
@@ -245,7 +245,7 @@ a communication channel."
    ;; them are included in the result.
    (let ((footnotes
 	  (org-element-map
-	      (list (org-element-lineage section 'headline) section)
+	      (list (or (org-element-lineage section 'headline) "") section)
 	      'footnote-reference
 	    (lambda (fn)
 	      (and (eq (org-element-property :type fn) 'standard)
