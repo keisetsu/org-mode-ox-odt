@@ -5934,7 +5934,7 @@ holding contextual information."
 				   ((stringp suffix-i)
 				    (concat "Heading_20_" (number-to-string level) suffix-i))
 				   (t (concat "Heading_20_" (number-to-string level))))))
-                         (_none (org-element-put-property headline :style style)))
+                         (_none (org-element-put-property h :style style)))
 		    (format
 		     "\n<text:h text:style-name=\"%s\" text:outline-level=\"%s\">%s</text:h>"
 		     (org-odt--get-derived-paragraph-style h info style) level hc))))
@@ -7935,7 +7935,7 @@ the plist used as a communication channel."
 
 	    ;; Case 2: If an element does not have an explicit style but
 	    ;; has an IMPLICIT, PRE-CONFIGURE STYLE of it's own, use it.
-	    ;; For example, paragraphs within a FOOTNOTE-DEFINITON,
+	    ;; For example, paragraphs within a FOOTNOTE-DEFINITION,
 	    ;; CENTER-BLOCK or QUOTE-BLOCK get pre-configured styles
 	    ;; like "Footnote", "OrgCenter" or "Quotations" resply.
 
@@ -12508,37 +12508,37 @@ form
     nodes))
 
 (defun org-odt--get-set-style-info (info &optional property)
-  (if (not (plist-get info :odt-next-style-by-style))
-      (let* ((dom
-              (org-odt--get-set-styles-dom info))
-             (nodes
-	      (odt-dom--query dom
-			      ;; Under DOM's children
-			      %_all
-
-			      ;; ... look for all nodes that  explicitly specify
-			      ;; `style:next-style-name'
-			      %style:next-style-name
-
-			      ;; ... and collect the `style:name',
-			      ;; `style:parent-style-name' and `style:next-style-name'
-			      ;; properties of those nodes
-			      (list (cons (or %style:display-name %style:name) %style:next-style-name)))))
-        (plist-put info :odt-next-style-by-style nodes)
-        nodes
-        )))
+  (cond ((plist-get info :odt-next-style-by-style))
+        (t (let* ((dom
+                   (org-odt--get-set-styles-dom info))
+                  (nodes
+	           (odt-dom--query dom
+			           ;; Under DOM's children
+			           %_all
+			           ;; ... look for all nodes that  explicitly specify
+			           ;; `style:next-style-name'
+			           %style:next-style-name
+                                   
+			           ;; ... and collect the `style:name',
+			           ;; `style:parent-style-name' and `style:next-style-name'
+			           ;; properties of those nodes
+			           (cons %style:name %style:next-style-name))))
+             (plist-put info :odt-next-style-by-style nodes)
+             nodes
+             ))))
 
 (defun org-odt--get-style-default(el info)
-  (let* ((element-type (org-element-type el))
-        (sibling (org-export-get-previous-element el info))
-        (headline (org-export-get-parent-headline el))
-        (next-styles (org-odt--get-set-style-info info :odt-next-style-by-style))
-        (relative-style (if sibling (org-element-property sibling :style)
-                          (if headline (org-element-property headline :style) ""))))
-    (if relative-style
-        (alist-get next-styles relative-style)
-      "Text_20_body"
-     )))
+  (let* (
+         (sibling (org-export-get-previous-element el info))
+         (headline (org-export-get-parent-headline el))
+         (next-styles (org-odt--get-set-style-info info :odt-next-style-by-style))
+         (relative-style (if sibling (org-element-property :style sibling)
+                           (if headline (org-element-property :style headline) "")))
+         (next-style (assoc relative-style next-styles)))
+    (if next-style
+        (cdr next-style)
+      "Text_20_body")))
+
 
 (defun org-odt--get-set-styles-dom (info)
   (let* ((styles-file
