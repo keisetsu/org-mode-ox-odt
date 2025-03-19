@@ -5933,7 +5933,8 @@ holding contextual information."
 				    (concat prefix-i (number-to-string level) suffix-i))
 				   ((stringp suffix-i)
 				    (concat "Heading_20_" (number-to-string level) suffix-i))
-				   (t (concat "Heading_20_" (number-to-string level)))))))
+				   (t (concat "Heading_20_" (number-to-string level))))))
+                         (_none (org-element-put-property headline :style style)))
 		    (format
 		     "\n<text:h text:style-name=\"%s\" text:outline-level=\"%s\">%s</text:h>"
 		     (org-odt--get-derived-paragraph-style h info style) level hc))))
@@ -7987,8 +7988,10 @@ the plist used as a communication channel."
 				;; `org-odt--translate-description-lists/latex',
 				;; `org-odt--translate-description-lists/html'
 				;; `org-odt--translate-latex-fragments'.
-				(org-element-property :style el)
-				(org-odt--read-attribute el :style)))
+			        (org-element-property :style el)
+				(org-odt--read-attribute el :style)
+                                (org-odt--get-style-default el info)
+                                ))
 			      (plain-list
 			       ;; NOTE: ITEMs cannot have #+ATTR_ODT
 			       ;; attached to them.  See
@@ -8027,6 +8030,7 @@ the plist used as a communication channel."
 			    style))
 		     finally return style))
 	   (index-entries (or (org-odt--format-index-entries paragraph info) "")))
+      (org-element-put-property paragraph :style style)
       ;; If this paragraph is a leading paragraph in an item and the
       ;; item has a checkbox, splice the checkbox and paragraph contents
       ;; together.
