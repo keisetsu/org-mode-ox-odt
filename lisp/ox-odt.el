@@ -12485,6 +12485,78 @@ form
 
 (org-odt--init-with-compat)
 
+(defun org-odt--get-next-styles (styles-file)
+  (let* ((dom
+	  (odt-dom:file->dom styles-file nil))
+         (nodes
+	  (odt-dom--query dom
+			  ;; Under DOM's children
+			  %_all
+
+			  ;; ... look for all nodes that  explicitly specify
+			  ;; `style:next-style-name'
+			  %style:next-style-name
+
+			  ;; ... and collect the `style:name',
+			  ;; `style:parent-style-name' and `style:next-style-name'
+			  ;; properties of those nodes
+			  (list (cons (or %style:display-name %style:name) %style:next-style-name)))))
+    nodes))
+
+(defun org-odt--get-set-style-info (info &optional property)
+  (if (not (plist-get info :odt-next-style-by-style))
+      (let* ((dom
+              (org-odt--get-set-styles-dom info))
+             (nodes
+	      (odt-dom--query dom
+			      ;; Under DOM's children
+			      %_all
+
+			      ;; ... look for all nodes that  explicitly specify
+			      ;; `style:next-style-name'
+			      %style:next-style-name
+
+			      ;; ... and collect the `style:name',
+			      ;; `style:parent-style-name' and `style:next-style-name'
+			      ;; properties of those nodes
+			      (list (cons (or %style:display-name %style:name) %style:next-style-name)))))
+        (plist-put info :odt-next-style-by-style nodes)
+        nodes
+        )))
+
+(defun org-odt--get-style-default(el info)
+  (let* ((element-type (org-element-type el))
+        (sibling (org-export-get-previous-element el info))
+        (headline (org-export-get-parent-headline el))
+        (next-styles (org-odt--get-set-style-info info :odt-next-style-by-style))
+        (relative-style (if sibling (org-element-property sibling :style)
+                          (if headline (org-element-property headline :style) ""))))
+    (if relative-style
+        (alist-get next-styles relative-style)
+      "Text_20_body"
+     )))
+
+(defun org-odt--get-set-styles-dom (info)
+  (let* ((styles-file
+	  (let ((file (plist-get info :odt-styles-file)))
+	    (cond
+	     ((or (not file) (string= file ""))
+              (org-odt-get-backend-property org-export-current-backend :styles-file))
+	     ((file-name-absolute-p file) file)
+	     (t (expand-file-name
+		 file (file-name-directory (plist-get info :input-file)))))))
+	 (dom
+          (if (not (plist-get info :odt-styles-dom))
+              (if (not (file-readable-p styles-file))
+                  (user-error "Cannot read styles file: %s" styles-file)
+                (odt-dom:file->dom
+                 styles-file
+	         'strip-comment-nodes-p)))))
+    (plist-put info :odt-styles-dom dom)
+    dom
+    )
+  )
+
 (provide 'ox-odt)
 
 ;;; ox-odt.el ends here
