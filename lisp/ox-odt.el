@@ -7969,14 +7969,14 @@ the plist used as a communication channel."
 				     (footnote "OrgFootnoteCenter")
 				     (endnote "OrgEndnoteCenter")
 				     (t "OrgCenter"))))
-			      (footnote-definition
-			       (setq within-note-definition-p
-				     (if (org-odt--endnote-p el info) 'endnote 'footnote))
-			       (or (org-odt--read-attribute el :style)
-				   (cl-case within-note-definition-p
-				     (footnote "Footnote")
-				     (endnote "Endnote")
-				     (t (error "This shouldn't happen")))))
+			      ;; (footnote-definition
+			      ;;  (setq within-note-definition-p
+			      ;;        (if (org-odt--endnote-p el info) 'endnote 'footnote))
+			      ;;  (or (org-odt--read-attribute el :style)
+			      ;;      (cl-case within-note-definition-p
+			      ;;        (footnote "Footnote")
+			      ;;        (endnote "Endnote")
+			      ;;        (t (error "This shouldn't happen")))))
 			      (paragraph
 			       (or
 				;; Case 1: Some paragraphs are "created"
@@ -12528,16 +12528,25 @@ form
              ))))
 
 (defun org-odt--get-style-default(el info)
-  (let* (
-         (sibling (org-export-get-previous-element el info))
-         (headline (org-export-get-parent-headline el))
-         (next-styles (org-odt--get-set-style-info info :odt-next-style-by-style))
-         (relative-style (if sibling (org-element-property :style sibling)
-                           (if headline (org-element-property :style headline) "")))
-         (next-style (assoc relative-style next-styles)))
-    (if next-style
-        (cdr next-style)
-      "Text_20_body")))
+  (let ((parent (org-export-get-parent el)))
+    (if parent 
+        (cl-case (org-element-type parent)
+          (footnote-definition
+           "Footnote")
+          (quote-block
+           "Quotations")
+          )
+      (let* (
+             (sibling (org-export-get-previous-element el info))
+             (headline (org-export-get-parent-headline el))
+             (next-styles (org-odt--get-set-style-info info :odt-next-style-by-style))
+             (relative-style (if sibling (org-element-property :style sibling)
+                               ;; Can I create a list of blocks that have 
+                               (if headline (org-element-property :style headline) "")))
+             (next-style (assoc relative-style next-styles)))
+        (if next-style
+            (cdr next-style)
+          "Text_20_body")))))
 
 
 (defun org-odt--get-set-styles-dom (info)
